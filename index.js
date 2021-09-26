@@ -33,7 +33,7 @@ const getConfig = async () => {
   /**
    * M
    */
-  const mCookies = config.m;
+  const mCookies = config.m || [];
   if (mCookies.length) {
     _log('\nM');
     for (const cookie of mCookies) {
@@ -49,7 +49,7 @@ const getConfig = async () => {
   /**
    * W
    */
-  const wConfig = config.w;
+  const wConfig = config.w || [];
   if (wConfig.length) {
     // 获取礼包列表
     const giftList = await WClient.getGiftList().catch(e => {
