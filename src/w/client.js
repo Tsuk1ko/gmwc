@@ -293,7 +293,7 @@ module.exports = class WClient {
 
     const list = (() => {
       const { card_group } = data;
-      if (!card_group) [];
+      if (!card_group) return [];
       for (const { group } of card_group) {
         if (!group) continue;
         const tmp = group.filter(({ scheme }) => String(scheme).startsWith(decode('aHR0cHM6Ly9rYS5zaW5hLmNvbS5jbg==')));
