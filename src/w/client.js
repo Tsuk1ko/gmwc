@@ -13,8 +13,6 @@ const getAgent = require('../utils/getAgent');
 const retryPromise = require('../utils/retryPromise');
 
 const CACHE_DIR = Path.resolve(__dirname, '../../cache/');
-const CONTAINER_ID = decode('MTAwODA4ZmM0MzlkZWRiYjA2Y2E1ZmQ4NTg4NDhlNTIxYjg3MTY=');
-const ITEM_ID = decode('MjMyNDc2ZmM0MzlkZWRiYjA2Y2E1ZmQ4NTg4NDhlNTIxYjg3MTY=');
 const AXIOS_COMMON_CONFIG = {
   timeout: 10000,
   headers: {
@@ -31,21 +29,20 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 module.exports = class WClient {
   constructor({ alc, proxy, aid, gsid, s, from }) {
-    if (aid && gsid && s) {
-      this.appCheckinConfig = {
-        params: {
-          aid,
-          gsid,
-          s,
-          from,
-          c: decode('d2VpY29hYnJvYWQ='),
-          request_url: `${decode(
-            'aHR0cDovL2kuaHVhdGkud2VpYm8uY29tL21vYmlsZS9zdXBlci9hY3RpdmVfZmNoZWNraW4/cGFnZWlkPQ==',
-          )}${CONTAINER_ID}`,
-        },
-        headers: IOS_HEADERS,
-      };
-    }
+    this.useCheckinV2 = !!(aid && gsid && s);
+    this.getCheckinV2Config = () => ({
+      params: {
+        aid,
+        gsid,
+        s,
+        from,
+        c: decode('d2VpY29hYnJvYWQ='),
+        request_url: `${decode(
+          'aHR0cDovL2kuaHVhdGkud2VpYm8uY29tL21vYmlsZS9zdXBlci9hY3RpdmVfZmNoZWNraW4/cGFnZWlkPQ==',
+        )}${this.cid}`,
+      },
+      headers: IOS_HEADERS,
+    });
 
     this.cookieCacheFile = Path.resolve(CACHE_DIR, `${md5(alc)}.cookie.json`);
     const httpsAgent = getAgent(proxy);
@@ -65,6 +62,10 @@ module.exports = class WClient {
       axiosCookieJarSupport(this.proxyAxios);
       this.proxyAxios.defaults.jar = this.cookieJar;
     } else this.proxyAxios = this.axios;
+  }
+
+  setCid(cid) {
+    this.cid = cid;
   }
 
   loadCookieFromCache() {
@@ -94,7 +95,7 @@ module.exports = class WClient {
   async isLoggedin() {
     return (
       (await retryPromise(() => this.check200(decode('aHR0cHM6Ly9rYS5zaW5hLmNvbS5jbi9odG1sNS9teWJveA==')))) &&
-      (this.appCheckinConfig
+      (this.useCheckinV2
         ? true
         : await retryPromise(() => this.check200(decode('aHR0cHM6Ly93ZWliby5jb20vYWovYWNjb3VudC93YXRlcm1hcms='))))
     );
@@ -153,7 +154,7 @@ module.exports = class WClient {
 
     if (!loginUrl) throw new Error('登录失败[1]');
 
-    if (!this.appCheckinConfig) {
+    if (!this.useCheckinV2) {
       await retryPromise(() =>
         this.axios.get(loginUrl, {
           params: {
@@ -172,7 +173,7 @@ module.exports = class WClient {
   }
 
   checkin() {
-    return this.appCheckinConfig ? this.checkinV2() : this.checkinV1();
+    return this.useCheckinV2 ? this.checkinV2() : this.checkinV1();
   }
 
   checkinV1() {
@@ -183,7 +184,7 @@ module.exports = class WClient {
           .get(decode('aHR0cHM6Ly93ZWliby5jb20vcC9hai9nZW5lcmFsL2J1dHRvbg=='), {
             params: {
               api: decode('aHR0cDovL2kuaHVhdGkud2VpYm8uY29tL2FqL3N1cGVyL2NoZWNraW4='),
-              id: CONTAINER_ID,
+              id: this.cid,
             },
           })
           .then(async ({ data }) => {
@@ -212,7 +213,7 @@ module.exports = class WClient {
     return retryPromise(
       () =>
         this.axios
-          .get(decode('aHR0cHM6Ly9hcGkud2VpYm8uY24vMi9wYWdlL2J1dHRvbg=='), this.appCheckinConfig)
+          .get(decode('aHR0cHM6Ly9hcGkud2VpYm8uY24vMi9wYWdlL2J1dHRvbg=='), this.getCheckinV2Config())
           .then(async ({ data }) => {
             switch (data.result) {
               case 1:
@@ -251,7 +252,7 @@ module.exports = class WClient {
           referer: `${decode('aHR0cHM6Ly9rYS5zaW5hLmNvbS5jbi9odG1sNS9naWZ0Lw==')}${id}?${stringify({
             channel: decode('d2JsaW5r'),
             luicode: decode('MTAwMDAwMTE='),
-            lfid: `${CONTAINER_ID}${decode('Xy1fZmVlZA==')}`,
+            lfid: `${this.cid}${decode('Xy1fZmVlZA==')}`,
           })}`,
         },
       })
@@ -278,14 +279,14 @@ module.exports = class WClient {
       });
   }
 
-  static async getGiftList() {
+  static async getGiftList(iid) {
     const { data } = await retryPromise(() =>
       axios.get(decode('aHR0cHM6Ly9hcGkud2VpYm8uY24vMi9jb250YWluZXIvZ2V0X2l0ZW0='), {
         timeout: 10000,
         params: {
           from: decode('MTBCOTI5MzAxMA=='),
           c: 'iphone',
-          itemid: `${ITEM_ID}${decode('Xy1fcGFnZV9pbmZlZWRfYXN5bmNtaXg=')}`,
+          itemid: `${iid}${decode('Xy1fcGFnZV9pbmZlZWRfYXN5bmNtaXg=')}`,
         },
         headers: IOS_HEADERS,
       }),
