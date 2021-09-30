@@ -261,10 +261,12 @@ module.exports = class WClient {
           _log(`「${name}」领取成功`);
           return data.kahao;
         }
-        _err(`「${name}」领取失败：${String(msg).replace(/亲爱的.+?，/, '')}`);
+        (/签到\d+天以上才能领取/.test(String(msg)) ? _warn : _err)(
+          `「${name}」领取失败：${String(msg).replace(/亲爱的.+?，/, '')}`,
+        );
         if (retry <= 0) {
           global.failed = true;
-          _err('失败次数过多，放弃 C');
+          _err('失败次数过多，放弃领取');
           return;
         }
         if (msg.includes('领卡拥挤')) {

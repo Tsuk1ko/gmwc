@@ -59,12 +59,14 @@ const getConfig = async () => {
   const wConfig = config.w || [];
   const wCIMap = { ...DEFAULT_CI_MAP, ...(config.ci || {}) };
   if (wConfig.length) {
+    _log();
+
     // 获取礼包列表
     const giftListMap = _.mapValues(wCIMap, () => []);
     for (const [cid, iid] of Object.entries(wCIMap)) {
       giftListMap[cid] = await WClient.getGiftList(iid).catch(e => {
         global.failed = true;
-        _err('礼包列表请求失败', e.toString());
+        _err('礼包列表请求失败', cid, e.toString());
         return [];
       });
     }
