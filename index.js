@@ -9,11 +9,7 @@ const sleep = require('./src/utils/sleep');
 
 _.templateSettings.interpolate = /{{([\s\S]+?)}}/g;
 
-const DEFAULT_CI_MAP = {
-  [decode('MTAwODA4ZmM0MzlkZWRiYjA2Y2E1ZmQ4NTg4NDhlNTIxYjg3MTY=')]: decode(
-    'MjMyNDc2ZmM0MzlkZWRiYjA2Y2E1ZmQ4NTg4NDhlNTIxYjg3MTY=',
-  ),
-};
+const DEFAULT_CID_LIST = [decode('MTAwODA4ZmM0MzlkZWRiYjA2Y2E1ZmQ4NTg4NDhlNTIxYjg3MTY=')];
 
 const getConfig = async () => {
   let config = {};
@@ -57,14 +53,14 @@ const getConfig = async () => {
    * W
    */
   const wConfig = config.w || [];
-  const wCIMap = { ...DEFAULT_CI_MAP, ...(config.ci || {}) };
+  const wCids = [...DEFAULT_CID_LIST, ...(config.cids || [])];
   if (wConfig.length) {
     _log();
 
     // 获取礼包列表
-    const giftListMap = _.mapValues(wCIMap, () => []);
-    for (const [cid, iid] of Object.entries(wCIMap)) {
-      giftListMap[cid] = await WClient.getGiftList(iid).catch(e => {
+    const giftListMap = {};
+    for (const cid of wCids) {
+      giftListMap[cid] = await WClient.getGiftList(cid).catch(e => {
         global.failed = true;
         _err('礼包列表请求失败', cid, e.toString());
         return [];

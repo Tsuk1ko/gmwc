@@ -24,6 +24,8 @@ const AXIOS_COMMON_CONFIG = {
 const IOS_HEADERS = {
   headers: { 'user-agent': decode('V2VpYm9PdmVyc2Vhcy80LjMuNSAoaVBob25lOyBpT1MgMTQuNjsgU2NhbGUvMy4wMCk=') },
 };
+const GIFT_IID_SUFFIX = decode('Xy1fcGFnZV9pbmZlZWRfYXN5bmNtaXg=');
+const KA_URL = decode('aHR0cHM6Ly9rYS5zaW5hLmNvbS5jbg==');
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -281,25 +283,43 @@ module.exports = class WClient {
       });
   }
 
-  static async getGiftList(iid) {
-    const { data } = await retryPromise(() =>
+  static async getGiftList(cid) {
+    const {
+      data: {
+        data: {
+          pageInfo: { nick },
+          cards,
+        },
+      },
+    } = await retryPromise(() =>
+      axios.get(decode('aHR0cHM6Ly9tLndlaWJvLmNuL2FwaS9jb250YWluZXIvZ2V0SW5kZXg='), {
+        timeout: 10000,
+        params: { containerid: cid },
+        headers: IOS_HEADERS,
+      }),
+    );
+    if (!cards) throw new Error('no cards');
+    const { itemid } = cards.find(({ itemid }) => String(itemid).endsWith(GIFT_IID_SUFFIX)) || {};
+
+    const {
+      data: { card_group },
+    } = await retryPromise(() =>
       axios.get(decode('aHR0cHM6Ly9hcGkud2VpYm8uY24vMi9jb250YWluZXIvZ2V0X2l0ZW0='), {
         timeout: 10000,
         params: {
           from: decode('MTBCOTI5MzAxMA=='),
           c: 'iphone',
-          itemid: `${iid}${decode('Xy1fcGFnZV9pbmZlZWRfYXN5bmNtaXg=')}`,
+          itemid,
         },
         headers: IOS_HEADERS,
       }),
     );
 
     const list = (() => {
-      const { card_group } = data;
       if (!card_group) return [];
       for (const { group } of card_group) {
         if (!group) continue;
-        const tmp = group.filter(({ scheme }) => String(scheme).startsWith(decode('aHR0cHM6Ly9rYS5zaW5hLmNvbS5jbg==')));
+        const tmp = group.filter(({ scheme }) => String(scheme).startsWith(KA_URL));
         if (tmp.length) return tmp;
       }
       return [];
@@ -307,7 +327,7 @@ module.exports = class WClient {
 
     return list.map(({ title_sub, scheme }) => ({
       id: String(/(?<=gift\/)\d+/.exec(scheme)),
-      name: title_sub,
+      name: `${nick}${title_sub}`,
     }));
   }
 };
