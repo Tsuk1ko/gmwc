@@ -1,4 +1,4 @@
-import Actions from '@actions/core';
+import * as Actions from '@actions/core';
 
 const isCI = !!process.env.CI;
 
