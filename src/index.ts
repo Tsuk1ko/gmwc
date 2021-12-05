@@ -55,6 +55,7 @@ const getConfig = async (): Promise<Config> => {
   const wConfig = config.w || [];
   const wCids = [...DEFAULT_CID_LIST, ...(config.cids || [])];
   if (wConfig.length) {
+    _log('\nW');
     await WClient.fetchGiftListMap(wCids);
     for (const [i, config] of Object.entries(wConfig)) {
       _log(`\nW[${i}]`);

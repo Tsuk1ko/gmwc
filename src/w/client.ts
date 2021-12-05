@@ -112,7 +112,7 @@ export class WClient {
     });
 
     for (const [cid, giftList] of Object.entries(WClient.giftListMap)) {
-      _log(`<${cid}>`);
+      _log(`> ${cid}`);
       await this.signIn(cid);
       if (!myGiftBox) continue;
 
@@ -161,11 +161,16 @@ export class WClient {
   }
 
   protected async login(): Promise<boolean> {
+    if (await this.isLoggedin()) {
+      _log('Cookie 有效，无需重新登陆');
+      return true;
+    }
     try {
-      return await retryAsync(
-        () => this._login().then(() => true),
+      await retryAsync(
+        () => this._login(),
         e => _warn('登录失败，进行重试', e.toString()),
       );
+      return true;
     } catch (e: any) {
       _err('登录失败', e.toString());
       return false;
@@ -173,10 +178,6 @@ export class WClient {
   }
 
   protected async _login() {
-    if (await this.isLoggedin()) {
-      _log('Cookie 有效，无需重新登陆');
-      return;
-    }
     _log('登录中');
 
     const jumpUrl = await retryAsync(() =>
@@ -201,22 +202,22 @@ export class WClient {
 
     if (!jumpUrl) throw new Error('登录失败[0]');
 
-    const loginUrl = await retryAsync(() =>
-      this.axios.get<string>(jumpUrl).then(({ data }) => {
-        const search = /setCrossDomainUrlList\((.+?)\);/.exec(data);
-        const json = search?.[1];
-        if (!json) return;
-        try {
-          return JSON.parse(json).arrURL[0] as string;
-        } catch (error) {
-          _err(error);
-        }
-      }),
-    );
-
-    if (!loginUrl) throw new Error('登录失败[1]');
-
     if (!this.useSignInV2) {
+      const loginUrl = await retryAsync(() =>
+        this.axios.get<string>(jumpUrl).then(({ data }) => {
+          const search = /setCrossDomainUrlList\((.+?)\);/.exec(data);
+          const json = search?.[1];
+          if (!json) return;
+          try {
+            return JSON.parse(json).arrURL[0] as string;
+          } catch (error) {
+            _err(error);
+          }
+        }),
+      );
+
+      if (!loginUrl) throw new Error('登录失败[1]');
+
       await retryAsync(() =>
         this.axios.get(loginUrl, {
           params: {
