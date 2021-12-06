@@ -173,6 +173,7 @@ export class WClient {
       return true;
     } catch (e: any) {
       _err('登录失败', e.toString());
+      _setFailed();
       return false;
     }
   }
