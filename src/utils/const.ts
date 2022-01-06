@@ -57,4 +57,9 @@ export const wConsts = [
   'aHR0cHM6Ly9tLndlaWJvLmNuL2FwaS9jb250YWluZXIvZ2V0SW5kZXg=',
   'aHR0cHM6Ly9hcGkud2VpYm8uY24vMi9jb250YWluZXIvZ2V0X2l0ZW0=',
   'MTBCOTI5MzAxMA==',
+  'aHR0cHM6Ly9zaW5hLmNvbS5jbg==',
+  // 25
+  'aHR0cHM6Ly9nYW1lcy53ZWliby5jbi9wcml6ZS9hai9sb3R0ZXJ5',
+  'aHR0cHM6Ly9nYW1lcy53ZWliby5jbi9wcml6ZS9sb3R0ZXJ5',
+  'MTBDMDA5MzAxMA==',
 ].map(decode);

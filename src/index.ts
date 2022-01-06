@@ -59,12 +59,12 @@ const getConfig = async (): Promise<Config> => {
     await WClient.fetchGiftListMap(wCids);
     for (const [i, config] of Object.entries(wConfig)) {
       _log(`\nW[${i}]`);
-      if (!config?.alc) {
+      if (!config || !config.alc || !config.aid || !config.gsid) {
         _setFailed();
-        _err('未提供 ALC，请查看 README 并更新配置');
+        _err('缺少 alc / aid / gsid，请查看 README 并更新配置');
         continue;
       }
-      const wClient = new WClient(config);
+      const wClient = new WClient(config as WClientOptions);
       await wClient.signInAndGetGift(i);
     }
   }

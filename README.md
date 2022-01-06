@@ -107,8 +107,7 @@ Cookie 获取请参考[此处](https://git.io/JM9KN)
       "gsid": "",
       "s": "",
       "from": "",
-      "webhook": "",
-      "proxy": ""
+      "webhook": ""
     }
   ]
 }
@@ -116,12 +115,7 @@ Cookie 获取请参考[此处](https://git.io/JM9KN)
 
 如果要多账号的话你应该懂怎么做
 
-支持两种 API，网页版和国际版客户端
-
-|                              |          网页版          |            国际版             |
-| ---------------------------- | :----------------------: | :---------------------------: |
-| 必须配置项                   |          `alc`           | `alc` `aid` `gsid` `s` `from` |
-| 在 GitHub Actions 中异地签到 | 不可以，除非配置 `proxy` |             可以              |
+> 因礼包领取方式调整，从 2022-01-07 起，本项目不再支持网页版 API，统一使用国际版客户端 API
 
 #### `alc`
 
@@ -129,11 +123,9 @@ Cookie 获取请参考[此处](https://git.io/JM9KN)
 2. 进入[这个页面](https://login.sina.com.cn/sso/test)，会 404，不用管
 3. F12 开发者工具 - Application - Cookies，将 `ALC` 的值填入即可
 
-#### `aid` `gsid` `s` `from`（可选）
+#### `aid` `gsid` `s` `from`
 
-只有提供了这几项配置才会使用**国际版**客户端 API
-
-需要通过抓国际版客户端的包得到，我只能说懂的都懂
+需要通过抓国际版客户端的包得到
 
 我个人习惯使用 [whistle](https://github.com/avwo/whistle)
 
@@ -149,9 +141,3 @@ Cookie 获取请参考[此处](https://git.io/JM9KN)
 注意 URL 参数中除了上述占位符外的内容都应该进行 URL 编码
 
 ※ 你可以使用 [Server酱](http://sc.ftqq.com/3.version) 或 [IFTTT](https://ifttt.com/) 之类的工具推送至微信或 Telegram 等
-
-#### `proxy`（可选）
-
-使用的代理，支持 http / https / socks
-
-只有使用**网页版** API 时才会使用，可用于规避异地签到问题
