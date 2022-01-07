@@ -205,52 +205,47 @@ export class WClient {
 
   protected async getGiftCode({ id, name }: WGift): Promise<string | undefined> {
     try {
-      return await retryAsync(
-        async () => {
-          const {
-            data: { msg, data },
-          } = await Axios.get<{
-            msg: string;
-            data?: { prize_data?: { card_no: string; prize_name: string } };
-          }>(wConsts[25], {
-            params: {
-              ticket_id: id,
-              ext: '',
-              aid: this.params.aid,
-              from: wConsts[27],
-            },
-            headers: {
-              referer: `${wConsts[26]}?ticket_id=${id}&ext=`,
-              cookie: this.cookieString,
-            },
-          });
-          const giftName = data?.prize_data?.prize_name || name;
-          const giftCard = data?.prize_data?.card_no;
-          switch (msg) {
-            case 'success':
-              _log(`「${giftName}」领取成功`);
-              if (giftCard) {
-                this.giftStore.set(id, 1);
-                return giftCard;
-              }
-              throw new Error('没有卡号');
-            case 'recently':
-              _log(`「${giftName}」已经领取过了`);
+      return await retryAsync(async () => {
+        const {
+          data: { msg, data },
+        } = await Axios.get<{
+          msg: string;
+          data?: { prize_data?: { card_no: string; prize_name: string } };
+        }>(wConsts[25], {
+          timeout: 10000,
+          params: {
+            ticket_id: id,
+            ext: '',
+            aid: this.params.aid,
+            from: wConsts[27],
+          },
+          headers: {
+            referer: `${wConsts[26]}?ticket_id=${id}&ext=`,
+            cookie: this.cookieString,
+          },
+        });
+        const giftName = data?.prize_data?.prize_name || name;
+        const giftCard = data?.prize_data?.card_no;
+        switch (msg) {
+          case 'success':
+            _log(`「${giftName}」领取成功`);
+            if (giftCard) {
               this.giftStore.set(id, 1);
-              break;
-            case 'fail':
-              _warn(`「${giftName}」未达到签到天数`);
-              break;
-          }
-        },
-        e => {
-          _setFailed();
-          _err('礼包领取失败', e.toString());
-        },
-      );
+              return giftCard;
+            }
+            throw new Error('没有卡号');
+          case 'recently':
+            _log(`「${giftName}」已经领取过了`);
+            this.giftStore.set(id, 1);
+            break;
+          case 'fail':
+            _warn(`「${giftName}」未达到签到天数`);
+            break;
+        }
+      });
     } catch (e: any) {
       _setFailed();
-      _err('失败次数过多，放弃领取');
+      _err('礼包领取失败', e.toString());
     }
   }
 
