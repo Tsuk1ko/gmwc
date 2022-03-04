@@ -3,7 +3,7 @@ name: gmwc
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 23 * * *'
+    - cron: "0 23 * * *"
 
 jobs:
   checkin:
@@ -18,12 +18,16 @@ jobs:
       - name: Sync with upstream
         if: github.repository != 'Tsuk1ko/gmwc'
         continue-on-error: true
-        uses: aormsby/Fork-Sync-With-Upstream-action@v2.2
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.2
         with:
-          upstream_repository: Tsuk1ko/gmwc
-          upstream_branch: main
-          target_branch: main
-          git_pull_args: '-s recursive -Xtheirs'
+          target_sync_branch: main
+          target_repo_token: ${{ secrets.ACCESS_TOKEN || github.token }}
+          upstream_sync_repo: Tsuk1ko/gmwc
+          upstream_sync_branch: main
+
+      - name: Keep alive
+        if: github.repository == 'Tsuk1ko/gmwc'
+        uses: gautamkrishnar/keepalive-workflow@master
 
       - name: Cache
         uses: actions/cache@v2
@@ -34,7 +38,7 @@ jobs:
             gc-cache-v3-
 
       - name: Install dependencies
-        run: yarn install
+        run: yarn install --production --frozen-lockfile
 
       - name: Checkin
         env:
