@@ -2,6 +2,7 @@ import _ from 'lodash';
 import Fs from 'fs-extra';
 import Axios from 'axios';
 import { decode } from 'js-base64';
+import { jsonc } from 'jsonc';
 import { _log, _err, _setFailed } from './utils/log';
 import { MClient, MClientOptions } from './m/client';
 import { WClient, WClientOptions } from './w/client';
@@ -22,7 +23,7 @@ const getConfig = async (): Promise<Config> => {
   if (process.env.CONFIG_URL) {
     try {
       const { data } = await Axios.get(process.env.CONFIG_URL);
-      config = typeof data === 'string' ? JSON.parse(data) : data;
+      config = typeof data === 'string' ? jsonc.parse(data) : data;
     } catch (e: any) {
       _err('CONFIG_URL 配置错误', e.toString());
     }
@@ -31,6 +32,12 @@ const getConfig = async (): Promise<Config> => {
       config = Fs.readJsonSync('config.json');
     } catch (e: any) {
       _err('config.json 格式错误', e.toString());
+    }
+  } else if (Fs.existsSync('config.jsonc')) {
+    try {
+      config = Fs.readJsonSync('config.jsonc');
+    } catch (e: any) {
+      _err('config.jsonc 格式错误', e.toString());
     }
   }
   return config;

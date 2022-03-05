@@ -11,7 +11,7 @@
 1. Fork 本项目
 2. 前往 Actions 页面启用 GitHub Actions
 3. 构造 json 配置文件，创建 [gist](https://gist.github.com/) 并获取源文件链接
-   1. description 随便，filename 要以 `.json` 结尾，例如 `gmwc-config.json`
+   1. description 随便，filename 以 `.json` 结尾（或者 `.jsonc`，本项目也支持），例如 `gmwc-config.json`
    2. 填入配置文件内容
    3. 点击“Create secret gist”创建私有 gist
    4. 右击右上角“Raw”，复制链接地址，将这个链接最后的 `/raw/xxx/yyy.json` 部分中的 `xxx/` 删除，即变为 `/raw/yyy.json`，就得到我们要的源文件链接了
@@ -25,7 +25,7 @@
 1. 安装 Node.js
 2. Clone 本项目
 3. `npm i`
-4. 构造 json 配置文件，命名为 `config.json` 并置于项目根目录
+4. 构造 json 配置文件，命名为 `config.json`（或者 `config.jsonc`，本项目也支持）并置于项目根目录
 5. `npm start`
 
 ### 配置文件
