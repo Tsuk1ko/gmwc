@@ -111,8 +111,10 @@ export class WClient {
         // 发送兑换码
         if (this.webhook) {
           try {
-            await Axios.get(
-              _.template(this.webhook)(_.mapValues({ ...gift, code, index }, v => encodeURIComponent(v))),
+            await retryAsync(
+              () =>
+                Axios.get(_.template(this.webhook)(_.mapValues({ ...gift, code, index }, v => encodeURIComponent(v)))),
+              e => _warn('Webhook 调用失败，进行重试', e.toString()),
             );
             _log('Webhook 调用成功');
           } catch (e: any) {
