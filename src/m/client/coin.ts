@@ -2,6 +2,7 @@ import Axios, { AxiosInstance } from 'axios';
 import { mConsts } from '../../utils/const';
 import { Cookie } from '../../utils/cookie';
 import { _err, _log, _setFailed, _warn } from '../../utils/log';
+import { maskId } from '../../utils/mask';
 import { retryAsync } from '../../utils/retry';
 import { sleep } from '../../utils/sleep';
 import { ds } from '../ds';
@@ -104,6 +105,7 @@ export class MCClient {
     for (const post_id of postIds) {
       if (success >= num) break;
       await sleep(1000);
+      const maskedPostId = maskId(post_id);
       try {
         const {
           data: { retcode, message },
@@ -113,16 +115,16 @@ export class MCClient {
               retcode: number;
               message: string;
             }>(mConsts[17], { params: { post_id } }),
-          e => _warn(`看帖 ${post_id} 失败，进行重试`, e.toString()),
+          e => _warn(`看帖 ${maskedPostId} 失败，进行重试`, e.toString()),
         );
         if (retcode !== 0) {
-          _warn(`看帖 ${post_id} 失败(${retcode})：${message}`);
+          _warn(`看帖 ${maskedPostId} 失败(${retcode})：${message}`);
           continue;
         }
         success++;
-        _log(`看帖 ${post_id} 成功`);
+        _log(`看帖 ${maskedPostId} 成功`);
       } catch (e: any) {
-        _warn(`看帖 ${post_id} 失败`, e);
+        _warn(`看帖 ${maskedPostId} 失败`, e);
       }
     }
     if (success < num) {
@@ -136,6 +138,7 @@ export class MCClient {
     for (const post_id of postIds) {
       if (success >= num) break;
       await sleep(1000);
+      const maskedPostId = maskId(post_id);
       try {
         const {
           data: { retcode, message },
@@ -145,14 +148,14 @@ export class MCClient {
               retcode: number;
               message: string;
             }>(mConsts[18], { post_id, is_cancel: false }),
-          e => _warn(`点赞 ${post_id} 失败，进行重试`, e.toString()),
+          e => _warn(`点赞 ${maskedPostId} 失败，进行重试`, e.toString()),
         );
         if (retcode !== 0) {
-          _warn(`点赞 ${post_id} 失败(${retcode})：${message}`);
+          _warn(`点赞 ${maskedPostId} 失败(${retcode})：${message}`);
           continue;
         }
         success++;
-        _log(`点赞 ${post_id} 成功`);
+        _log(`点赞 ${maskedPostId} 成功`);
         await sleep(500);
         try {
           const {
@@ -163,16 +166,16 @@ export class MCClient {
                 retcode: number;
                 message: string;
               }>(mConsts[18], { post_id, is_cancel: true }),
-            e => _warn(`取消点赞 ${post_id} 失败，进行重试`, e.toString()),
+            e => _warn(`取消点赞 ${maskedPostId} 失败，进行重试`, e.toString()),
           );
           if (retcode !== 0) {
-            _warn(`取消点赞 ${post_id} 失败(${retcode})：${message}`);
+            _warn(`取消点赞 ${maskedPostId} 失败(${retcode})：${message}`);
           }
         } catch (e: any) {
-          _warn(`取消点赞 ${post_id} 失败`, e);
+          _warn(`取消点赞 ${maskedPostId} 失败`, e);
         }
       } catch (e: any) {
-        _warn(`点赞 ${post_id} 失败`, e);
+        _warn(`点赞 ${maskedPostId} 失败`, e);
       }
     }
     if (success < num) {
@@ -186,6 +189,7 @@ export class MCClient {
     for (const post_id of postIds) {
       if (success >= num) break;
       await sleep(1000);
+      const maskedPostId = maskId(post_id);
       try {
         const {
           data: { retcode, message },
@@ -197,16 +201,16 @@ export class MCClient {
             }>(mConsts[19], {
               params: { entity_id: post_id, entity_type: 1 },
             }),
-          e => _warn(`分享 ${post_id} 失败，进行重试`, e.toString()),
+          e => _warn(`分享 ${maskedPostId} 失败，进行重试`, e.toString()),
         );
         if (retcode !== 0) {
-          _warn(`分享 ${post_id} 失败(${retcode})：${message}`);
+          _warn(`分享 ${maskedPostId} 失败(${retcode})：${message}`);
           continue;
         }
         success++;
-        _log(`分享 ${post_id} 成功`);
+        _log(`分享 ${maskedPostId} 成功`);
       } catch (e: any) {
-        _warn(`分享 ${post_id} 失败`, e);
+        _warn(`分享 ${maskedPostId} 失败`, e);
       }
     }
     if (success < num) {

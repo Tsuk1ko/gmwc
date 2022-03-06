@@ -3,6 +3,7 @@ import { ds } from '../ds';
 import { _log, _warn, _err, _setFailed } from '../../utils/log';
 import { retryAsync } from '../../utils/retry';
 import { mConsts } from '../../utils/const';
+import { maskId } from '../../utils/mask';
 import { dvid } from '../dvid';
 
 export interface MGSRole {
@@ -10,8 +11,6 @@ export interface MGSRole {
   game_uid: string;
   region_name: string;
 }
-
-const maskUid = (uid: string) => uid.substr(-3).padStart(uid.length, '*');
 
 export class MGSClient {
   protected axios: AxiosInstance;
@@ -80,13 +79,13 @@ export class MGSClient {
                     _setFailed();
                     return _err;
                 }
-              })()(maskUid(uid), region_name, JSON.stringify(data));
+              })()(maskId(uid), region_name, JSON.stringify(data));
             }),
         e => _warn('签到请求失败，进行重试', e.toString()),
       );
     } catch (e: any) {
       _setFailed();
-      _err(maskUid(uid), region_name, '签到请求失败', e.toString());
+      _err(maskId(uid), region_name, '签到请求失败', e.toString());
     }
   }
 }
