@@ -22,7 +22,7 @@ export class MCClient {
       headers: {
         ...JSON.parse(mConsts[13]),
         [mConsts[2]]: dvid(),
-        ds: ds(true),
+        ds: ds(),
         referer: mConsts[14],
         cookie: cookieMap.toString(),
       },

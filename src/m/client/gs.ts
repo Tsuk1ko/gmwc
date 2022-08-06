@@ -22,7 +22,7 @@ export class MGSClient {
       headers: {
         [mConsts[2]]: dvid(),
         [mConsts[3]]: '5',
-        [mConsts[4]]: '2.3.0',
+        [mConsts[4]]: '2.34.1',
         'user-agent': mConsts[5],
         cookie,
       },
@@ -62,7 +62,7 @@ export class MGSClient {
               { act_id, region, uid },
               {
                 headers: {
-                  ds: ds(),
+                  ds: ds(true),
                   origin: mConsts[6],
                   referer: `${mConsts[7]}${act_id}${mConsts[8]}`,
                 },
