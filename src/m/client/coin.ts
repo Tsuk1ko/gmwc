@@ -5,7 +5,7 @@ import { _err, _log, _setFailed, _warn } from '../../utils/log';
 import { maskId } from '../../utils/mask';
 import { retryAsync } from '../../utils/retry';
 import { sleep } from '../../utils/sleep';
-import { ds } from '../ds';
+import { coinDs, ds } from '../ds';
 import { dvid } from '../dvid';
 
 export class MCClient {
@@ -44,6 +44,7 @@ export class MCClient {
 
   protected async signIn() {
     try {
+      const postData = { gids: 2 };
       const {
         data: { retcode, message, data },
       } = await retryAsync(
@@ -52,7 +53,7 @@ export class MCClient {
             retcode: number;
             message: string;
             data?: { points: number };
-          }>(mConsts[15], null, { params: { gids: 2 } }),
+          }>(mConsts[15], postData, { headers: { ds: coinDs(postData) } }),
         e => _warn('签到失败，进行重试', e.toString()),
       );
       if (retcode === 0) {

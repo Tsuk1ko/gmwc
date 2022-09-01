@@ -91,11 +91,15 @@ Cookie 获取请参考[此处](https://git.io/JM9KN)
 
 `stoken` 为选填，填了才会完成币的每日任务
 
-获取方法：**无痕模式**登录[帐号管理](https://tinyurl.com/2p947bth)（在上面拿完 cookie 之后继续操作也行，无需重新登陆），<kbd>F12</kbd>打开 Console，执行[这段代码](https://gist.github.com/Tsuk1ko/cdd5bbf4b89faa7f3b140ee59923b5a3)，最终输出的字符串即为 `stoken`
+获取方法：~~**无痕模式**登录[帐号管理](https://tinyurl.com/2p947bth)（在上面拿完 cookie 之后继续操作也行，无需重新登陆），<kbd>F12</kbd>打开 Console，执行[这段代码](https://gist.github.com/Tsuk1ko/cdd5bbf4b89faa7f3b140ee59923b5a3)，最终输出的字符串即为 `stoken`~~
+
+据说上述方法已经失效，可使用抓包工具在手机 APP 获得
 
 ## W
 
-> 因为微博超发卡貌似改成抽奖啥的了，只有摩拉和实物，没有原石了，所以不建议再配置超话签到。签到功能仍然可以正常运行，但领礼包已经没用了，也不会再维护了。
+> 因为超话发卡貌似改成抽奖啥的了，只有摩拉和实物，没有原石了，所以不建议再配置超话签到。签到功能仍然可以正常运行，但领礼包已经没用了，也不会再维护了。
+
+<details>
 
 - 自动签到，自动领取礼包，并可以通过 webhook 发送兑换码，支持多帐号
 - 有一定使用门槛（懂的都懂，不懂的我也没办法）
@@ -145,3 +149,4 @@ Cookie 获取请参考[此处](https://git.io/JM9KN)
 注意 URL 参数中除了上述占位符外的内容都应该进行 URL 编码
 
 ※ 你可以使用 [Server酱](http://sc.ftqq.com/3.version) 或 [IFTTT](https://ifttt.com/) 之类的工具推送至微信或 Telegram 等
+</details>
