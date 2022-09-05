@@ -15,7 +15,7 @@ export interface MGSRole {
 export class MGSClient {
   protected axios: AxiosInstance;
 
-  constructor(cookie: string) {
+  constructor(cookie: string, ua?: string) {
     this.axios = Axios.create({
       timeout: 10000,
       baseURL: mConsts[1],
@@ -23,7 +23,7 @@ export class MGSClient {
         [mConsts[2]]: dvid(),
         [mConsts[3]]: '5',
         [mConsts[4]]: '2.34.1',
-        'user-agent': mConsts[5],
+        'user-agent': ua || mConsts[5],
         cookie,
       },
     });
@@ -57,7 +57,7 @@ export class MGSClient {
       await retryAsync(
         () =>
           this.axios
-            .post(
+            .post<{ retcode: number; data: { success: number } }>(
               mConsts[10],
               { act_id, region, uid },
               {
@@ -72,6 +72,11 @@ export class MGSClient {
               (() => {
                 switch (data.retcode) {
                   case 0:
+                    if (data.data.success !== 0) {
+                      _setFailed();
+                      _err('由于风控，签到请求失败，请查看 README');
+                      return _err;
+                    }
                     return _log;
                   case -5003:
                     return _warn;

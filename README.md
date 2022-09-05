@@ -77,7 +77,8 @@
   "m": [
     {
       "cookie": "",
-      "stoken": ""
+      "stoken": "",
+      "ua": ""
     }
   ]
 }
@@ -87,13 +88,21 @@ Cookie 获取请参考[此处](https://git.io/JM9KN)
 
 如果要多账号的话你应该懂怎么做
 
+#### 关于 `ua`
+
+自2022年8月左右开始，签到增加了风控，可能会需要验证码导致脚本无法正常签到
+
+如果出现这种情况，请先尝试使用手机 APP 手动签到，直到不再弹出验证码，然后使用 APP 扫以下二维码获取 UA，填入配置文件中
+
+[![](https://user-images.githubusercontent.com/24877906/188344519-8b969898-6071-4642-9da2-27c64149f76b.png)](https://tool.ip138.com/useragent/)
+
 #### 关于 `stoken`
 
 `stoken` 为选填，填了才会完成币的每日任务
 
-获取方法：~~**无痕模式**登录[帐号管理](https://tinyurl.com/2p947bth)（在上面拿完 cookie 之后继续操作也行，无需重新登陆），<kbd>F12</kbd>打开 Console，执行[这段代码](https://gist.github.com/Tsuk1ko/cdd5bbf4b89faa7f3b140ee59923b5a3)，最终输出的字符串即为 `stoken`~~
+获取方法：**无痕模式**登录[帐号管理](https://tinyurl.com/2p947bth)（在上面拿完 cookie 之后继续操作也行，无需重新登陆），<kbd>F12</kbd>打开 Console，执行[这段代码](https://gist.github.com/Tsuk1ko/cdd5bbf4b89faa7f3b140ee59923b5a3)，最终输出的字符串即为 `stoken`
 
-据说上述方法已经失效，可使用抓包工具在手机 APP 获得
+也可使用抓包工具在手机 APP 获得
 
 ## W
 
