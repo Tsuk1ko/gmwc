@@ -11,6 +11,7 @@ import { dvid } from '../dvid';
 export class MCClient {
   protected axios: AxiosInstance;
   protected static postIds: string[] = [];
+  protected static fetchPostIdsFailed = false;
 
   constructor(cookie: string, stoken: string) {
     const cookieMap = new Cookie(cookie);
@@ -30,16 +31,18 @@ export class MCClient {
   }
 
   async doTasks() {
-    if (!MCClient.postIds.length) await MCClient.fetchPostIds();
+    if (!MCClient.postIds.length && !MCClient.fetchPostIdsFailed) {
+      await MCClient.fetchPostIds();
+    }
     await this.signIn();
     if (!MCClient.postIds.length) {
       _err('无贴可用');
       _setFailed();
       return;
     }
-    await this.readPosts(MCClient.postIds);
-    await this.upvotePosts(MCClient.postIds);
-    await this.sharePosts(MCClient.postIds);
+    await this.readPosts();
+    await this.upvotePosts();
+    await this.sharePosts();
   }
 
   protected async signIn() {
@@ -81,6 +84,7 @@ export class MCClient {
           }>(mConsts[16], {
             params: {
               forum_id: 26,
+              gids: 2,
               is_good: false,
               is_hot: false,
               page_size: 20,
@@ -90,18 +94,20 @@ export class MCClient {
         e => _warn('获取帖子列表失败，进行重试', e.toString()),
       );
       if (retcode !== 0) {
+        this.fetchPostIdsFailed = true;
         _err(`获取帖子列表失败(${retcode})：${message}`);
         _setFailed();
         return;
       }
       MCClient.postIds = data?.list.map(item => item.post.post_id) || [];
     } catch (e: any) {
+      this.fetchPostIdsFailed = true;
       _err('获取帖子列表失败', e);
       _setFailed();
     }
   }
 
-  protected async readPosts(postIds: string[], num = 3) {
+  protected async readPosts(postIds = MCClient.postIds, num = 3) {
     let success = 0;
     for (const post_id of postIds) {
       if (success >= num) break;
@@ -134,7 +140,7 @@ export class MCClient {
     }
   }
 
-  protected async upvotePosts(postIds: string[], num = 5) {
+  protected async upvotePosts(postIds = MCClient.postIds, num = 5) {
     let success = 0;
     for (const post_id of postIds) {
       if (success >= num) break;
@@ -185,7 +191,7 @@ export class MCClient {
     }
   }
 
-  protected async sharePosts(postIds: string[], num = 1) {
+  protected async sharePosts(postIds = MCClient.postIds, num = 1) {
     let success = 0;
     for (const post_id of postIds) {
       if (success >= num) break;
