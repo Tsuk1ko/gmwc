@@ -3,7 +3,7 @@ import Fs from 'fs-extra';
 import Axios from 'axios';
 import { decode } from 'js-base64';
 import { jsonc } from 'jsonc';
-import { _log, _err, _setFailed } from './utils/log';
+import { _log, _err, _setFailed, _isFailed } from './utils/log';
 import { MClient, MClientOptions } from './m/client';
 import { WClient, WClientOptions } from './w/client';
 import { PartialDeep } from './@types';
@@ -12,6 +12,7 @@ export type Config = PartialDeep<{
   m: MClientOptions[];
   w: WClientOptions[];
   cids: string[];
+  failedWebhook: string;
 }>;
 
 _.templateSettings.interpolate = /{{([\s\S]+?)}}/g;
@@ -77,4 +78,14 @@ const getConfig = async (): Promise<Config> => {
   }
 
   _log();
+
+  // webhook
+  if (_isFailed() && config.failedWebhook) {
+    try {
+      await Axios.get(config.failedWebhook);
+    } catch (error) {
+      _err('Webhook 调用失败');
+      _err(error);
+    }
+  }
 })();
