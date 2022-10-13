@@ -13,7 +13,7 @@ export class MClient {
       typeof options === 'string' ? { cookie: options, stoken: undefined, ua: undefined } : options;
     if (!cookie) throw new Error('cookie is required');
     this.gsClient = new MGSClient(cookie, ua);
-    if (stoken) this.coinClient = new MCClient(cookie, stoken);
+    if (stoken) this.coinClient = new MCClient(cookie, stoken, ua);
   }
 
   async gsSignIn() {
