@@ -47,7 +47,7 @@ export class MCClient {
       _setFailed();
     }
     for (const { times, func } of taskList) {
-      await func(times);
+      await func.call(this, times);
     }
   }
 
@@ -79,7 +79,7 @@ export class MCClient {
         data: {
           states: Array<{
             mission_id: number;
-            happened_times: 1;
+            happened_times: number;
           }>;
         };
       }>(mConsts[21]);
@@ -90,7 +90,7 @@ export class MCClient {
       }
       const taskStateMap = _.keyBy(data.states, 'mission_id');
       return _.map(taskMap, ({ times, func }, id) => ({
-        times: times - taskStateMap[id].happened_times,
+        times: times - (taskStateMap[id]?.happened_times ?? 0),
         func,
       })).filter(({ times }) => times > 0);
     } catch (e: any) {
