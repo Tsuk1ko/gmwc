@@ -102,36 +102,28 @@ export class MCClient {
   protected async signIn() {
     try {
       const postData = { gids: 2 };
-      for (let retry = 1; retry <= 4; retry++) {
-        const {
-          data: { retcode, message, data },
-        } = await retryAsync(
-          () =>
-            this.axios.post<{
-              retcode: number;
-              message: string;
-              data?: { points: number };
-            }>(mConsts[15], postData, { headers: { ds: coinDs(postData) } }),
-          e => _warn('签到失败，进行重试', e.toString()),
-        );
-        if (retcode === 0) {
-          _log(`签到成功，获得 ${data?.points || '?'} 币`);
-          return;
-        }
-        if (retcode === 1034) {
-          if (retry >= 4) {
-            _err('因验证码签到失败，请尝试手动签到一段时间再使用');
-            _setFailed();
-            return;
-          }
-          _warn(`讨论区签到出现验证码，尝试重试 ${retry}/3`);
-          await sleep(Math.round(_.random(10, 15) * 1000));
-          continue;
-        }
-        _err(`签到失败(${retcode})：${message}`);
-        _setFailed();
-        break;
+      const {
+        data: { retcode, message, data },
+      } = await retryAsync(
+        () =>
+          this.axios.post<{
+            retcode: number;
+            message: string;
+            data?: { points: number };
+          }>(mConsts[15], postData, { headers: { ds: coinDs(postData) } }),
+        e => _warn('签到失败，进行重试', e.toString()),
+      );
+      if (retcode === 0) {
+        _log(`签到成功，获得 ${data?.points || '?'} 币`);
+        return;
       }
+      if (retcode === 1034) {
+        _err('因验证码签到失败，请手动签到');
+        _setFailed();
+        return;
+      }
+      _err(`签到失败(${retcode})：${message}`);
+      _setFailed();
     } catch (e: any) {
       _err('签到失败', e);
       _setFailed();
