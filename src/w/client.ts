@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import Fs from 'fs-extra';
 import Path from 'path';
-import Axios, { AxiosInstance, AxiosRequestConfig, AxiosRequestHeaders } from 'axios';
-import axiosCookieJarSupport from 'axios-cookiejar-support';
+import Axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { wrapper } from 'axios-cookiejar-support';
 import { CookieJar } from 'tough-cookie';
 import md5 from 'md5';
 import { _log, _warn, _err, _setFailed } from '../utils/log';
@@ -35,7 +35,7 @@ const AXIOS_COMMON_CONFIG: AxiosRequestConfig = {
   },
   withCredentials: true,
 };
-const IOS_HEADERS: AxiosRequestHeaders = {
+const IOS_HEADERS = {
   'user-agent': wConsts[0],
 };
 const GIFT_IID_SUFFIX = wConsts[1];
@@ -61,9 +61,12 @@ export class WClient {
     this.cookieJar = this.loadCookieFromCache();
     this.cookieJar.setCookieSync(`ALC=${alc}`, wConsts[5]);
 
-    this.axios = Axios.create(AXIOS_COMMON_CONFIG);
-    axiosCookieJarSupport(this.axios);
-    this.axios.defaults.jar = this.cookieJar;
+    this.axios = wrapper(
+      Axios.create({
+        ...AXIOS_COMMON_CONFIG,
+        jar: this.cookieJar,
+      }),
+    );
   }
 
   protected loadCookieFromCache(): CookieJar {
