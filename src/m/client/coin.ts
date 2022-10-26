@@ -167,6 +167,7 @@ export class MCClient {
   }
 
   protected async viewPost(times = 3, postIds = MCClient.postIds) {
+    times += 1; // 容易漏一个不知道为啥
     let success = 0;
     for (const post_id of postIds) {
       if (success >= times) break;
@@ -200,6 +201,7 @@ export class MCClient {
   }
 
   protected async postUp(times = 5, postIds = MCClient.postIds) {
+    times += 1; // 容易漏一个不知道为啥
     let success = 0;
     for (const post_id of postIds) {
       if (success >= times) break;
