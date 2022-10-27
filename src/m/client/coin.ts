@@ -1,13 +1,14 @@
 import _ from 'lodash';
 import Axios, { AxiosInstance } from 'axios';
+import { coinDs, ds } from '../ds';
+import { dvid } from '../dvid';
 import { mConsts } from '../../utils/const';
 import { Cookie } from '../../utils/cookie';
 import { _err, _log, _setFailed, _warn } from '../../utils/log';
 import { maskId } from '../../utils/mask';
 import { retryAsync } from '../../utils/retry';
 import { sleep } from '../../utils/sleep';
-import { coinDs, ds } from '../ds';
-import { dvid } from '../dvid';
+import { kuxiDama } from '../../utils/dama';
 
 export class MCClient {
   protected axios: AxiosInstance;
@@ -99,7 +100,7 @@ export class MCClient {
     }
   }
 
-  protected async signIn() {
+  protected async signIn(times?: number, challenge?: string) {
     try {
       const postData = { gids: 2 };
       const {
@@ -110,7 +111,12 @@ export class MCClient {
             retcode: number;
             message: string;
             data?: { points: number };
-          }>(mConsts[15], postData, { headers: { ds: coinDs(postData) } }),
+          }>(mConsts[15], postData, {
+            headers: {
+              ds: coinDs(postData),
+              ...(challenge ? { 'x-rpc-challenge': challenge } : {}),
+            },
+          }),
         e => _warn('签到失败，进行重试', e.toString()),
       );
       if (retcode === 0) {
@@ -118,6 +124,14 @@ export class MCClient {
         return;
       }
       if (retcode === 1034) {
+        if (kuxiDama.available && !challenge) {
+          _log('出现验证码，尝试打码');
+          const challenge = await this.getChallenge();
+          if (challenge) {
+            await this.signIn(times, challenge);
+            return;
+          }
+        }
         _err('因验证码签到失败，请手动签到');
         _setFailed();
         return;
@@ -285,5 +299,24 @@ export class MCClient {
       _err(`未能完成分享 ${times} 次任务`);
       _setFailed();
     }
+  }
+
+  protected async getChallenge() {
+    const { data: gtData } = await this.axios.get<{ retcode: number; data: { gt: string; challenge: string } }>(
+      'https://bbs-api.mihoyo.com/misc/api/createVerification?is_high=true',
+    );
+    if (gtData.retcode !== 0) return;
+    const { gt, challenge } = gtData.data;
+    const validate = await kuxiDama.bbsCaptcha(gt, challenge);
+    if (!validate) return;
+    const { data: checkData } = await this.axios.post<{ retcode: number; data: { challenge: string } }>(
+      'https://bbs-api.mihoyo.com/misc/api/verifyVerification',
+      {
+        geetest_challenge: challenge,
+        geetest_seccode: `${validate}|jordan`,
+        geetest_validate: validate,
+      },
+    );
+    if (checkData.retcode === 0) return checkData.data.challenge;
   }
 }

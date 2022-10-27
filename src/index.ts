@@ -7,12 +7,14 @@ import { _log, _err, _setFailed, _isFailed } from './utils/log';
 import { MClient, MClientOptions } from './m/client';
 import { WClient, WClientOptions } from './w/client';
 import { PartialDeep } from './@types';
+import { kuxiDama } from './utils/dama';
 
 export type Config = PartialDeep<{
   m: MClientOptions[];
   w: WClientOptions[];
   cids: string[];
   failedWebhook: string;
+  kuxiToken: string;
 }>;
 
 _.templateSettings.interpolate = /{{([\s\S]+?)}}/g;
@@ -46,6 +48,10 @@ const getConfig = async (): Promise<Config> => {
 
 (async () => {
   const config = await getConfig();
+
+  if (config.kuxiToken) {
+    kuxiDama.setToken(config.kuxiToken);
+  }
 
   // M
   const mConfig = config.m || [];

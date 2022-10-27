@@ -1,10 +1,11 @@
 import Axios, { AxiosInstance } from 'axios';
 import { ds } from '../ds';
+import { dvid } from '../dvid';
 import { _log, _warn, _err, _setFailed } from '../../utils/log';
 import { retryAsync } from '../../utils/retry';
 import { mConsts } from '../../utils/const';
 import { maskId } from '../../utils/mask';
-import { dvid } from '../dvid';
+import { kuxiDama } from '../../utils/dama';
 
 export interface MGSRole {
   region: string;
@@ -51,41 +52,61 @@ export class MGSClient {
     }
   }
 
-  async signIn({ region, game_uid: uid, region_name }: MGSRole) {
+  async signIn(role: MGSRole, captcha?: { challenge: string; validate: string }) {
+    const { region, game_uid: uid, region_name } = role;
     const act_id = mConsts[0];
     try {
       await retryAsync(
-        () =>
-          this.axios
-            .post<{ retcode: number; data: { success: number } }>(
-              mConsts[10],
-              { act_id, region, uid },
-              {
-                headers: {
-                  ds: ds(true),
-                  origin: mConsts[6],
-                  referer: `${mConsts[7]}${act_id}${mConsts[8]}`,
-                },
-              },
-            )
-            .then(({ data }) => {
-              (() => {
-                switch (data.retcode) {
-                  case 0:
-                    if (data.data.success !== 0) {
-                      _setFailed();
-                      _err('由于风控，签到请求失败，请查看 README');
-                      return _err;
+        async () => {
+          const { data } = await this.axios.post<{
+            retcode: number;
+            message: string;
+            data: { success: number; gt: string; challenge: string };
+          }>(
+            mConsts[10],
+            { act_id, region, uid },
+            {
+              headers: {
+                ds: ds(true),
+                origin: mConsts[6],
+                referer: `${mConsts[7]}${act_id}${mConsts[8]}`,
+                ...(captcha
+                  ? {
+                      'x-rpc-challenge': captcha.challenge,
+                      'x-rpc-validate': captcha.validate,
+                      'x-rpc-seccode': `${captcha.validate}|jordan`,
                     }
-                    return _log;
-                  case -5003:
-                    return _warn;
-                  default:
-                    _setFailed();
-                    return _err;
+                  : {}),
+              },
+            },
+          );
+          const logFn = await (async () => {
+            switch (data.retcode) {
+              case 0:
+                if (data.data.success !== 0) {
+                  if (kuxiDama.available && !captcha) {
+                    _log('出现验证码，尝试打码');
+                    const { gt, challenge } = data.data;
+                    const validate = await kuxiDama.gameCaptcha(gt, challenge);
+                    if (validate) {
+                      await this.signIn(role, { challenge, validate });
+                      return;
+                    }
+                  }
+                  _setFailed();
+                  _err('由于验证码，签到请求失败，请查看 README');
+                  return _err;
                 }
-              })()(maskId(uid), region_name, JSON.stringify(data));
-            }),
+                return _log;
+              case -5003:
+                return _warn;
+              default:
+                _setFailed();
+                return _err;
+            }
+          })();
+          logFn?.(maskId(uid), region_name, data.retcode, data.message);
+        },
         e => _warn('签到请求失败，进行重试', e.toString()),
       );
     } catch (e: any) {
