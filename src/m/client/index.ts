@@ -9,9 +9,14 @@ export class MClient {
   protected coinClient?: MCClient;
 
   constructor(options: MClientOptions) {
-    const { cookie, stoken, ua } =
+    let { cookie, stoken, ua } =
       typeof options === 'string' ? { cookie: options, stoken: undefined, ua: undefined } : options;
     if (!cookie) throw new Error('cookie is required');
+    if (ua) {
+      const bbsUaReg = /miHoYoBBS\/[\d.]+$/;
+      if (bbsUaReg.test(ua)) ua = ua.replace(bbsUaReg, 'miHoYoBBS/2.34.1');
+      else ua = ua.replace(/ *$/, ' miHoYoBBS/2.34.1');
+    }
     this.gsClient = new MGSClient(cookie, ua);
     if (stoken) this.coinClient = new MCClient(cookie, stoken, ua);
   }
