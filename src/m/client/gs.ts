@@ -88,10 +88,8 @@ export class MGSClient {
                     _log('出现验证码，尝试打码');
                     const { gt, challenge } = data.data;
                     const validate = await kuxiDama.gameCaptcha(gt, challenge);
-                    if (validate) {
-                      await this.signIn(role, { challenge, validate });
-                      return;
-                    }
+                    await this.signIn(role, { challenge, validate });
+                    return;
                   }
                   _setFailed();
                   _err('由于验证码，签到请求失败，请查看 README');

@@ -301,22 +301,26 @@ export class MCClient {
     }
   }
 
-  protected async getChallenge() {
-    const { data: gtData } = await this.axios.get<{ retcode: number; data: { gt: string; challenge: string } }>(
-      'https://bbs-api.mihoyo.com/misc/api/createVerification?is_high=true',
-    );
-    if (gtData.retcode !== 0) return;
-    const { gt, challenge } = gtData.data;
-    const validate = await kuxiDama.bbsCaptcha(gt, challenge);
-    if (!validate) return;
-    const { data: checkData } = await this.axios.post<{ retcode: number; data: { challenge: string } }>(
-      'https://bbs-api.mihoyo.com/misc/api/verifyVerification',
-      {
-        geetest_challenge: challenge,
-        geetest_seccode: `${validate}|jordan`,
-        geetest_validate: validate,
+  protected getChallenge() {
+    return retryAsync(
+      async () => {
+        const { data: gtData } = await this.axios.get<{ retcode: number; data: { gt: string; challenge: string } }>(
+          'https://bbs-api.mihoyo.com/misc/api/createVerification?is_high=true',
+        );
+        if (gtData.retcode !== 0) return;
+        const { gt, challenge } = gtData.data;
+        const validate = await kuxiDama.bbsCaptcha(gt, challenge);
+        const { data: checkData } = await this.axios.post<{ retcode: number; data: { challenge: string } }>(
+          'https://bbs-api.mihoyo.com/misc/api/verifyVerification',
+          {
+            geetest_challenge: challenge,
+            geetest_seccode: `${validate}|jordan`,
+            geetest_validate: validate,
+          },
+        );
+        if (checkData.retcode === 0) return checkData.data.challenge;
       },
+      e => _warn('验证码失败，进行重试', e.toString()),
     );
-    if (checkData.retcode === 0) return checkData.data.challenge;
   }
 }

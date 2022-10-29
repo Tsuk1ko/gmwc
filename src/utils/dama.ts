@@ -1,6 +1,6 @@
 import Axios from 'axios';
 import { mConsts } from './const';
-import { _err, _log } from './log';
+import { _log } from './log';
 
 class KuxiDama {
   protected token?: string;
@@ -33,8 +33,7 @@ class KuxiDama {
       referer,
     });
     if (data.code !== 0) {
-      _err(`打码失败：${data.msg}`);
-      return;
+      throw new Error(`打码失败：${data.msg}`);
     }
     _log('打码成功');
     return data.data.validate;
