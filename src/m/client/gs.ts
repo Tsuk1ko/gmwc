@@ -5,7 +5,7 @@ import { _log, _warn, _err, _setFailed } from '../../utils/log';
 import { retryAsync } from '../../utils/retry';
 import { mConsts } from '../../utils/const';
 import { maskId } from '../../utils/mask';
-import { kuxiDama } from '../../utils/dama';
+import { dama } from '../../utils/dama';
 
 export interface MGSRole {
   region: string;
@@ -84,10 +84,10 @@ export class MGSClient {
             switch (data.retcode) {
               case 0:
                 if (data.data.success !== 0) {
-                  if (kuxiDama.available && !captcha) {
+                  if (dama.available && !captcha) {
                     _log('出现验证码，尝试打码');
                     const { gt, challenge } = data.data;
-                    const validate = await kuxiDama.gameCaptcha(gt, challenge);
+                    const validate = await dama.gameCaptcha(gt, challenge);
                     await this.signIn(role, { challenge, validate });
                     return;
                   }

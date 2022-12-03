@@ -1,16 +1,12 @@
 import Axios from 'axios';
+import { stringify } from 'qs';
+import type { Config } from '..';
 import { mConsts } from './const';
-import { _log } from './log';
+import { _log, _warn } from './log';
 
-class KuxiDama {
-  protected token?: string;
-
-  get available() {
-    return !!this.token;
-  }
-
-  public setToken(token: string) {
-    this.token = token;
+abstract class Dama {
+  public get available() {
+    return true;
   }
 
   public gameCaptcha(gt: string, challenge: string) {
@@ -21,7 +17,23 @@ class KuxiDama {
     return this.geetest(gt, challenge, mConsts[23]);
   }
 
-  protected async geetest(gt: string, challenge: string, referer: string) {
+  public async geetest(gt: string, challenge: string, referer: string) {
+    return '';
+  }
+}
+
+class KuxiDama extends Dama {
+  private enabled = true;
+
+  public constructor(protected readonly token: string) {
+    super();
+  }
+
+  public get available() {
+    return this.enabled && !!this.token;
+  }
+
+  public async geetest(gt: string, challenge: string, referer: string) {
     const { data } = await Axios.post<{
       code: number;
       msg: string;
@@ -33,11 +45,75 @@ class KuxiDama {
       referer,
     });
     if (data.code !== 0) {
-      throw new Error(`打码失败：${data.msg}`);
+      if (data.code === -999) this.enabled = false;
+      throw new Error(`KX打码失败：(${data.code})${data.msg}`);
     }
-    _log('打码成功');
+    _log('KX打码成功');
     return data.data.validate;
   }
 }
 
-export const kuxiDama = new KuxiDama();
+class RenrenDama extends Dama {
+  public constructor(protected readonly token: string) {
+    super();
+  }
+
+  public get available() {
+    return !!this.token;
+  }
+
+  public async geetest(gt: string, challenge: string, referer: string) {
+    const { data } = await Axios.post<{
+      status: number;
+      msg: string;
+      data: {
+        challenge: string;
+        validate: string;
+      };
+    }>(
+      'http://api.rrocr.com/api/recognize.html',
+      stringify({
+        appkey: this.token,
+        gt,
+        challenge,
+        referer,
+      }),
+    );
+    if (data.status !== 0) {
+      throw new Error(`RR打码失败：(${data.status})${data.msg}`);
+    }
+    _log('RR打码成功');
+    return data.data.validate;
+  }
+}
+
+class UnifiedDama extends Dama {
+  private readonly servers: Dama[] = [];
+
+  private get availableServers() {
+    return this.servers.filter(server => server.available);
+  }
+
+  public get available() {
+    return this.availableServers.length > 0;
+  }
+
+  public config(config: Config) {
+    if (config.kuxiToken) this.servers.push(new KuxiDama(config.kuxiToken));
+    if (config.renrenToken) this.servers.push(new RenrenDama(config.renrenToken));
+  }
+
+  public async geetest(gt: string, challenge: string, referer: string) {
+    for (const server of this.availableServers) {
+      try {
+        return await server.geetest(gt, challenge, referer);
+      } catch (error: any) {
+        if (server.available) throw error;
+        _warn(error.toString());
+      }
+    }
+    throw new Error('打码全失败');
+  }
+}
+
+export const dama = new UnifiedDama();

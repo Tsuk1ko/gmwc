@@ -8,7 +8,7 @@ import { _err, _log, _setFailed, _warn } from '../../utils/log';
 import { maskId } from '../../utils/mask';
 import { retryAsync } from '../../utils/retry';
 import { sleep } from '../../utils/sleep';
-import { kuxiDama } from '../../utils/dama';
+import { dama } from '../../utils/dama';
 
 export class MCClient {
   protected axios: AxiosInstance;
@@ -124,7 +124,7 @@ export class MCClient {
         return;
       }
       if (retcode === 1034) {
-        if (kuxiDama.available && !challenge) {
+        if (dama.available && !challenge) {
           _log('出现验证码，尝试打码');
           const challenge = await this.getChallenge();
           if (challenge) {
@@ -309,7 +309,7 @@ export class MCClient {
         );
         if (gtData.retcode !== 0) return;
         const { gt, challenge } = gtData.data;
-        const validate = await kuxiDama.bbsCaptcha(gt, challenge);
+        const validate = await dama.bbsCaptcha(gt, challenge);
         const { data: checkData } = await this.axios.post<{ retcode: number; data: { challenge: string } }>(
           'https://bbs-api.mihoyo.com/misc/api/verifyVerification',
           {
