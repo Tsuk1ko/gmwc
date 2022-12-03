@@ -1,6 +1,7 @@
 /tmp
 /cache/*.json
 config.json
+config.jsonc
 
 # Logs
 logs
