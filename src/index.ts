@@ -39,7 +39,7 @@ const getConfig = async (): Promise<Config> => {
     }
   } else if (Fs.existsSync('config.jsonc')) {
     try {
-      config = Fs.readJsonSync('config.jsonc');
+      config = jsonc.parse(Fs.readFileSync('config.jsonc').toString());
     } catch (e: any) {
       _err('config.jsonc 格式错误', e.toString());
     }
@@ -72,7 +72,7 @@ const getConfig = async (): Promise<Config> => {
     await WClient.fetchGiftListMap(wCids);
     for (const [i, config] of Object.entries(wConfig)) {
       _log(`\nW[${i}]`);
-      if (!config || !config.alc || !config.aid || !config.gsid) {
+      if (!config?.alc || !config.aid || !config.gsid) {
         _setFailed();
         _err('缺少 alc / aid / gsid，请查看 README 并更新配置');
         continue;
