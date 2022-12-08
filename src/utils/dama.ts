@@ -25,6 +25,8 @@ abstract class Dama {
 class KuxiDama extends Dama {
   private enabled = true;
 
+  private readonly unavailableCode = new Set([-2, -999]);
+
   public constructor(protected readonly token: string) {
     super();
   }
@@ -45,7 +47,7 @@ class KuxiDama extends Dama {
       referer,
     });
     if (data.code !== 0) {
-      if (data.code === -999) this.enabled = false;
+      if (this.unavailableCode.has(data.code)) this.enabled = false;
       throw new Error(`KX打码失败：(${data.code})${data.msg}`);
     }
     _log('KX打码成功');
