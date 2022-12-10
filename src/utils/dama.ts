@@ -25,8 +25,6 @@ abstract class Dama {
 class KuxiDama extends Dama {
   private enabled = true;
 
-  private readonly unavailableCode = new Set([-2, -999]);
-
   public constructor(protected readonly token: string) {
     super();
   }
@@ -47,7 +45,7 @@ class KuxiDama extends Dama {
       referer,
     });
     if (data.code !== 0) {
-      if (this.unavailableCode.has(data.code)) this.enabled = false;
+      if (data.code === -999 || data.msg.includes('积分不足')) this.enabled = false;
       throw new Error(`KX打码失败：(${data.code})${data.msg}`);
     }
     _log('KX打码成功');
@@ -102,7 +100,7 @@ class UnifiedDama extends Dama {
 
   public config(config: Config) {
     if (config.kuxiToken) this.servers.push(new KuxiDama(config.kuxiToken));
-    if (config.renrenToken) this.servers.push(new RenrenDama(config.renrenToken));
+    if (config.rrocrAppkey) this.servers.push(new RenrenDama(config.rrocrAppkey));
   }
 
   public async geetest(gt: string, challenge: string, referer: string) {

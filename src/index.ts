@@ -10,12 +10,13 @@ import { PartialDeep } from './@types';
 import { dama } from './utils/dama';
 
 export type Config = PartialDeep<{
+  users: MClientOptions[];
   m: MClientOptions[];
   w: WClientOptions[];
   cids: string[];
   failedWebhook: string;
   kuxiToken: string;
-  renrenToken: string;
+  rrocrAppkey: string;
 }>;
 
 _.templateSettings.interpolate = /{{([\s\S]+?)}}/g;
@@ -53,7 +54,7 @@ const getConfig = async (): Promise<Config> => {
   dama.config(config);
 
   // M
-  const mConfig = config.m || [];
+  const mConfig = config.users || config.m || [];
   if (mConfig.length) {
     for (const [i, config] of Object.entries(mConfig)) {
       _log(`\nM[${i}]`);
