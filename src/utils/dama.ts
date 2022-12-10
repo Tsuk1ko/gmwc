@@ -4,20 +4,30 @@ import type { Config } from '..';
 import { mConsts } from './const';
 import { _log, _warn } from './log';
 
+class DamaError extends Error {
+  constructor(message?: string | undefined, public readonly applySavingMode = false) {
+    super(message);
+  }
+}
+
 abstract class Dama {
+  public get savingModeAvailable() {
+    return false;
+  }
+
   public get available() {
     return true;
   }
 
-  public gameCaptcha(gt: string, challenge: string) {
-    return this.geetest(gt, challenge, mConsts[22]);
+  public gameCaptcha(gt: string, challenge: string, applySavingMode?: boolean) {
+    return this.geetest(gt, challenge, mConsts[22], applySavingMode);
   }
 
-  public bbsCaptcha(gt: string, challenge: string) {
-    return this.geetest(gt, challenge, mConsts[23]);
+  public bbsCaptcha(gt: string, challenge: string, applySavingMode?: boolean) {
+    return this.geetest(gt, challenge, mConsts[23], applySavingMode);
   }
 
-  public async geetest(gt: string, challenge: string, referer: string) {
+  public async geetest(gt: string, challenge: string, referer: string, applySavingMode?: boolean) {
     return '';
   }
 }
@@ -56,6 +66,10 @@ class KuxiDama extends Dama {
 class RenrenDama extends Dama {
   public constructor(protected readonly token: string) {
     super();
+  }
+
+  public get savingModeAvailable() {
+    return true;
   }
 
   public get available() {
@@ -98,15 +112,22 @@ class UnifiedDama extends Dama {
     return this.availableServers.length > 0;
   }
 
+  public get savingModeAvailable() {
+    return !!this.availableServers[0]?.savingModeAvailable;
+  }
+
   public config(config: Config) {
     if (config.kuxiToken) this.servers.push(new KuxiDama(config.kuxiToken));
     if (config.rrocrAppkey) this.servers.push(new RenrenDama(config.rrocrAppkey));
   }
 
-  public async geetest(gt: string, challenge: string, referer: string) {
+  public async geetest(gt: string, challenge: string, referer: string, applySavingMode?: boolean) {
     for (const server of this.availableServers) {
+      if (server.savingModeAvailable && applySavingMode) {
+        throw new DamaError('节约模式生效，终止打码', true);
+      }
       try {
-        return await server.geetest(gt, challenge, referer);
+        return await server.geetest(gt, challenge, referer, applySavingMode);
       } catch (error: any) {
         if (server.available) throw error;
         _warn(error.toString());

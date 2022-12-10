@@ -13,10 +13,18 @@ export interface MGSRole {
   region_name: string;
 }
 
-export class MGSClient {
-  protected axios: AxiosInstance;
+interface MGSAwards {
+  name: string;
+  cnt: number;
+}
 
-  constructor(cookie: string, ua?: string) {
+export class MGSClient {
+  protected static awards?: MGSAwards[];
+
+  protected readonly axios: AxiosInstance;
+  protected totalSignDay = NaN;
+
+  constructor(cookie: string, ua?: string, protected readonly savingMode = false) {
     this.axios = Axios.create({
       timeout: 10000,
       baseURL: mConsts[1],
@@ -28,6 +36,22 @@ export class MGSClient {
         cookie,
       },
     });
+  }
+
+  protected get award() {
+    const award = MGSClient.awards?.[this.totalSignDay + 1];
+    if (!award) return '未知';
+    return `${award.name}*${award.cnt}`;
+  }
+
+  protected get hasGotAllPrimogem() {
+    if (!MGSClient.awards || !this.totalSignDay) return false;
+    const gotPrimogemAwards = MGSClient.awards.slice(0, this.totalSignDay).filter(({ name }) => name === '原石');
+    return gotPrimogemAwards.length >= 3;
+  }
+
+  get applySavingMode() {
+    return this.savingMode && this.hasGotAllPrimogem;
   }
 
   async getRoles(): Promise<MGSRole[]> {
@@ -52,8 +76,35 @@ export class MGSClient {
     }
   }
 
+  async getSignStatus(role: MGSRole) {
+    const { region, game_uid: uid, region_name: regionName } = role;
+    const maskedUid = maskId(uid);
+    try {
+      return await retryAsync(
+        async () => {
+          const { data } = await this.axios.get<{
+            retcode: number;
+            message: string;
+            data: { total_sign_day: number; is_sign: boolean };
+          }>(mConsts[25], { params: { act_id: mConsts[0], region, uid } });
+          if (data.retcode !== 0) {
+            _err(maskedUid, regionName, `获取签到状态失败：(${data.retcode})${data.message}`);
+            return;
+          }
+          const { total_sign_day: totalSignDay, is_sign: isSign } = data.data;
+          this.totalSignDay = totalSignDay;
+          _log(maskedUid, regionName, `已签到${totalSignDay}天`, `今天${isSign ? '已签到' : '未签到'}`);
+          return { totalSignDay, isSign };
+        },
+        e => _warn('获取签到状态失败，进行重试', e.toString()),
+      );
+    } catch (e: any) {
+      _err(maskedUid, regionName, '获取签到状态失败', e.toString());
+    }
+  }
+
   async signIn(role: MGSRole, captcha?: { challenge: string; validate: string }) {
-    const { region, game_uid: uid, region_name } = role;
+    const { region, game_uid: uid } = role;
     const act_id = mConsts[0];
     try {
       await retryAsync(
@@ -80,36 +131,69 @@ export class MGSClient {
               },
             },
           );
-          const logFn = await (async () => {
-            switch (data.retcode) {
-              case 0:
-                if (data.data.success !== 0) {
-                  if (dama.available && !captcha) {
-                    _log('出现验证码，尝试打码');
-                    const { gt, challenge } = data.data;
-                    const validate = await dama.gameCaptcha(gt, challenge);
-                    await this.signIn(role, { challenge, validate });
+          switch (data.retcode) {
+            case 0:
+              if (data.data.success !== 0) {
+                if (dama.available && !captcha) {
+                  if (this.applySavingMode && dama.savingModeAvailable) {
+                    _log('出现验证码，节约模式生效，跳过');
                     return;
                   }
-                  _setFailed();
-                  _err('由于验证码，签到请求失败，请查看 README');
-                  return _err;
+                  _log('出现验证码，尝试打码');
+                  const { gt, challenge } = data.data;
+                  const validate = await dama.gameCaptcha(gt, challenge, this.applySavingMode);
+                  await this.signIn(role, { challenge, validate });
+                  return;
                 }
-                return _log;
-              case -5003:
-                return _warn;
-              default:
                 _setFailed();
-                return _err;
-            }
-          })();
-          logFn?.(maskId(uid), region_name, data.retcode, data.message);
+                _err('由于验证码，签到请求失败');
+                break;
+              }
+              _log(`签到成功，获得【${this.award}}】`);
+              break;
+            case -5003:
+              _warn(`签到失败：(${data.retcode})${data.message}`);
+              return _warn;
+            default:
+              _setFailed();
+              _err(`签到失败：(${data.retcode})${data.message}`);
+              break;
+          }
         },
-        e => _warn('签到请求失败，进行重试', e.toString()),
+        e => {
+          if (e.applySavingMode) throw e;
+          _warn('签到请求失败，进行重试', e.toString());
+        },
       );
     } catch (e: any) {
+      if (e.applySavingMode) {
+        _log(e.toString());
+        return;
+      }
       _setFailed();
-      _err(maskId(uid), region_name, '签到请求失败', e.toString());
+      _err('签到请求失败', e.toString());
+    }
+  }
+
+  public static async fetchAwards() {
+    try {
+      return await retryAsync(
+        async () => {
+          const { data } = await Axios.get<{
+            retcode: number;
+            message: string;
+            data: { awards: MGSAwards[] };
+          }>(mConsts[26], { params: { act_id: mConsts[0] } });
+          if (data.retcode !== 0) {
+            _err(`获取签到奖励信息失败：(${data.retcode})${data.message}`);
+            return;
+          }
+          this.awards = data.data.awards;
+        },
+        e => _warn('获取签到奖励信息失败，进行重试', e.toString()),
+      );
+    } catch (e: any) {
+      _err('获取签到奖励信息失败', e.toString());
     }
   }
 }

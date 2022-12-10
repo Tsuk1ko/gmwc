@@ -15,7 +15,7 @@ export class MCClient {
   protected static postIds: string[] = [];
   protected static fetchPostIdsFailed = false;
 
-  constructor(cookie: string, stoken: string, ua?: string) {
+  constructor(cookie: string, stoken: string, ua?: string, protected readonly applySavingMode = false) {
     const cookieMap = new Cookie(cookie);
     const stuid = cookieMap.get('login_uid') || cookieMap.get('ltuid') || cookieMap.get('account_id');
     if (!stuid) throw new Error('Cookie 不完整，请尝试重新获取');
@@ -125,6 +125,10 @@ export class MCClient {
       }
       if (retcode === 1034) {
         if (dama.available && !challenge) {
+          if (this.applySavingMode && dama.savingModeAvailable) {
+            _log('出现验证码，节约模式生效，跳过');
+            return;
+          }
           _log('出现验证码，尝试打码');
           const challenge = await this.getChallenge();
           if (challenge) {
@@ -132,13 +136,17 @@ export class MCClient {
             return;
           }
         }
-        _err('因验证码签到失败，请手动签到');
+        _err('由于验证码，签到请求失败');
         _setFailed();
         return;
       }
       _err(`签到失败(${retcode})：${message}`);
       _setFailed();
     } catch (e: any) {
+      if (e.applySavingMode) {
+        _log(e.toString());
+        return;
+      }
       _err('签到失败', e);
       _setFailed();
     }

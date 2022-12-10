@@ -17,11 +17,10 @@ export type Config = PartialDeep<{
   failedWebhook: string;
   kuxiToken: string;
   rrocrAppkey: string;
+  savingMode: boolean;
 }>;
 
 _.templateSettings.interpolate = /{{([\s\S]+?)}}/g;
-
-const DEFAULT_CID_LIST = [decode('MTAwODA4ZmM0MzlkZWRiYjA2Y2E1ZmQ4NTg4NDhlNTIxYjg3MTY=')];
 
 const getConfig = async (): Promise<Config> => {
   let config = {};
@@ -55,11 +54,13 @@ const getConfig = async (): Promise<Config> => {
 
   // M
   const mConfig = config.users || config.m || [];
+  const { savingMode } = config;
   if (mConfig.length) {
+    await MClient.init();
     for (const [i, config] of Object.entries(mConfig)) {
       _log(`\nM[${i}]`);
       if (!config || (typeof config !== 'string' && !config.cookie)) continue;
-      const mClient = new MClient(config);
+      const mClient = new MClient(config, savingMode);
       await mClient.gsSignIn();
       await mClient.earnCoin();
     }
@@ -67,10 +68,12 @@ const getConfig = async (): Promise<Config> => {
 
   // W
   const wConfig = config.w || [];
-  const wCids = [...DEFAULT_CID_LIST, ...(config.cids || [])];
   if (wConfig.length) {
     _log('\nW');
-    await WClient.fetchGiftListMap(wCids);
+    await WClient.fetchGiftListMap([
+      decode('MTAwODA4ZmM0MzlkZWRiYjA2Y2E1ZmQ4NTg4NDhlNTIxYjg3MTY='),
+      ...(config.cids || []),
+    ]);
     for (const [i, config] of Object.entries(wConfig)) {
       _log(`\nW[${i}]`);
       if (!config?.alc || !config.aid || !config.gsid) {

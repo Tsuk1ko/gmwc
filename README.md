@@ -52,7 +52,8 @@
     }
   ],
   "failedWebhook": "",
-  "rrocrAppkey": ""
+  "rrocrAppkey": "",
+  "savingMode": false
 }
 ```
 
@@ -86,4 +87,8 @@ UA 获取方法：使用 MYS APP 扫以下二维码获取 UA，填入配置文�
 
 ### `rrocrAppkey`
 
-可自动过验证码，dddd
+人人打码自动过验证码，dddd
+
+### `savingMode`
+
+节约模式，如果使用打码服务并设置 `savingMode` 为 `true`，那么当本月原石奖励拿齐后将不再继续签到
