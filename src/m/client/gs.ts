@@ -149,7 +149,7 @@ export class MGSClient {
                 _err('由于验证码，签到请求失败');
                 break;
               }
-              _log(`签到成功，获得【${this.award}}】`);
+              _log(`签到成功，获得【${this.award}】`);
               break;
             case -5003:
               _warn(`签到失败：(${data.retcode})${data.message}`);
