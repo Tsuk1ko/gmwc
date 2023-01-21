@@ -15,7 +15,7 @@ export class MCClient {
   protected static postIds: string[] = [];
   protected static fetchPostIdsFailed = false;
 
-  constructor(cookie: string, stoken: string, ua?: string, protected readonly applySavingMode = false) {
+  constructor(cookie: string, stoken: string, ua?: string, protected readonly getApplySavingMode = () => false) {
     const cookieMap = new Cookie(cookie);
     const stuid = cookieMap.get('login_uid') || cookieMap.get('ltuid') || cookieMap.get('account_id');
     if (!stuid) throw new Error('Cookie 不完整，请尝试重新获取');
@@ -31,6 +31,10 @@ export class MCClient {
         'user-agent': ua || mConsts[5],
       },
     });
+  }
+
+  get applySavingMode() {
+    return this.getApplySavingMode();
   }
 
   async doTasks() {

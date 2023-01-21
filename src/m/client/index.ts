@@ -18,7 +18,7 @@ export class MClient {
       else ua = ua.replace(/ *$/, ' miHoYoBBS/2.34.1');
     }
     this.gsClient = new MGSClient(cookie, ua, savingMode);
-    if (stoken) this.coinClient = new MCClient(cookie, stoken, ua, this.gsClient.applySavingMode);
+    if (stoken) this.coinClient = new MCClient(cookie, stoken, ua, () => this.gsClient.applySavingMode);
   }
 
   async gsSignIn() {

@@ -46,8 +46,9 @@ export class MGSClient {
 
   protected get hasGotAllPrimogem() {
     if (!MGSClient.awards || !this.totalSignDay) return false;
+    const primogemAwards = MGSClient.awards.filter(({ name }) => name === '原石');
     const gotPrimogemAwards = MGSClient.awards.slice(0, this.totalSignDay).filter(({ name }) => name === '原石');
-    return gotPrimogemAwards.length >= 3;
+    return primogemAwards.length === gotPrimogemAwards.length;
   }
 
   get applySavingMode() {
