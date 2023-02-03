@@ -3,7 +3,7 @@ import { sleep } from './sleep';
 export const retryAsync = async <T>(
   fn: () => Promise<T>,
   onError?: (e: any) => any,
-  retry = 4,
+  retry = 9,
   interval = 3000,
 ): Promise<T> => {
   try {
