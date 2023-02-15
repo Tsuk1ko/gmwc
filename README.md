@@ -59,9 +59,9 @@
 
 ### `cookie` & `stoken`
 
-1. 打开你的浏览器,进入**无痕/隐身模式**
+1. 打开你的浏览器，进入**无痕/隐身模式**
 2. 打开 `https://www.miyoushe.com/ys/` 并登录
-3. 在上一步登入完成后新建标签页，打开 `http://user.mihoyo.com/` 并登录
+3. 在上一步登入完成后新建标签页，打开 `https://user.mihoyo.com/` 并登录
 4. <kbd>F12</kbd> 打开开发者工具，点击上方 Network 选项卡，然后刷新页面
 5. 点击下方网络请求列表最上面第一项 `user.mihoyo.com`，在右侧面板往下滚找到 Request Headers 中的 cookie，后面的内容即为 `cookie`
 6. 点击上方 Console 选项卡，粘贴下方代码并回车，输出的内容即为 `stoken`
