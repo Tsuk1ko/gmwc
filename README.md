@@ -48,7 +48,9 @@
     {
       "cookie": "",
       "stoken": "",
-      "ua": ""
+      "ua": "",
+      "enableGs": true,
+      "enableSr": false
     }
   ],
   "failedWebhook": "",
@@ -80,6 +82,10 @@
 UA 获取方法：使用 MYS APP 扫以下二维码获取 UA，填入配置文件中
 
 [![](https://user-images.githubusercontent.com/24877906/188344519-8b969898-6071-4642-9da2-27c64149f76b.png)](https://tool.ip138.com/useragent/)
+
+### `enableGs` & `enableSr`
+
+是否启用 gs 或 sr 的签到，默认 gs 为 `true`，sr 为 `false`
 
 ### `failedWebhook`
 

@@ -56,12 +56,11 @@ const getConfig = async (): Promise<Config> => {
   const mConfig = config.users || config.m || [];
   const { savingMode } = config;
   if (mConfig.length) {
-    await MClient.init();
     for (const [i, config] of Object.entries(mConfig)) {
       _log(`\nM[${i}]`);
       if (!config || (typeof config !== 'string' && !config.cookie)) continue;
       const mClient = new MClient(config, savingMode);
-      await mClient.gsSignIn();
+      await mClient.signIn();
       await mClient.earnCoin();
     }
   }
