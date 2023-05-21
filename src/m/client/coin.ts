@@ -13,6 +13,7 @@ import { dama } from '../../utils/dama';
 export class MCClient {
   protected axios: AxiosInstance;
   protected static postIds: string[] = [];
+  protected static failedPostIds: string[] = [];
   protected static fetchPostIdsFailed = false;
 
   constructor(cookie: string, stoken: string, ua?: string, protected readonly getApplySavingMode = () => false) {
@@ -184,7 +185,7 @@ export class MCClient {
         _setFailed();
         return;
       }
-      MCClient.postIds = data?.list.map(item => item.post.post_id) || [];
+      this.postIds = data?.list.map(item => item.post.post_id) || [];
     } catch (e: any) {
       this.fetchPostIdsFailed = true;
       _err('获取帖子列表失败', e);
@@ -212,6 +213,7 @@ export class MCClient {
         );
         if (retcode !== 0) {
           _warn(`看帖 ${maskedPostId} 失败(${retcode})：${message}`);
+          MCClient.markFailedPostId(post_id);
           continue;
         }
         success++;
@@ -224,6 +226,7 @@ export class MCClient {
       _err(`未能完成看帖 ${times} 个任务`);
       _setFailed();
     }
+    MCClient.removeFailedPostIds();
   }
 
   protected async postUp(times = 5, postIds = MCClient.postIds) {
@@ -246,6 +249,7 @@ export class MCClient {
         );
         if (retcode !== 0) {
           _warn(`点赞 ${maskedPostId} 失败(${retcode})：${message}`);
+          MCClient.markFailedPostId(post_id);
           continue;
         }
         success++;
@@ -276,6 +280,7 @@ export class MCClient {
       _err(`未能完成点赞 ${times} 次任务`);
       _setFailed();
     }
+    MCClient.removeFailedPostIds();
   }
 
   protected async sharePost(times = 1, postIds = MCClient.postIds) {
@@ -299,6 +304,7 @@ export class MCClient {
         );
         if (retcode !== 0) {
           _warn(`分享 ${maskedPostId} 失败(${retcode})：${message}`);
+          MCClient.markFailedPostId(post_id);
           continue;
         }
         success++;
@@ -311,6 +317,7 @@ export class MCClient {
       _err(`未能完成分享 ${times} 次任务`);
       _setFailed();
     }
+    MCClient.removeFailedPostIds();
   }
 
   protected getChallenge() {
@@ -334,5 +341,15 @@ export class MCClient {
       },
       e => _warn('验证码失败，进行重试', e.toString()),
     );
+  }
+
+  protected static markFailedPostId(id: string) {
+    this.failedPostIds.push(id);
+  }
+
+  protected static removeFailedPostIds() {
+    if (!this.failedPostIds.length) return;
+    _.pullAll(this.postIds, this.failedPostIds);
+    this.failedPostIds = [];
   }
 }
