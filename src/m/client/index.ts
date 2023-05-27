@@ -32,11 +32,7 @@ export class MClient {
     }
     if (enableGs) this.clients.push(new MGSClient(cookie, ua, savingMode));
     if (enableSr) this.clients.push(new MSRClient(cookie, ua, savingMode));
-    if (stoken) this.coinClient = new MCClient(cookie, stoken, ua, () => this.coinApplySavingMode);
-  }
-
-  protected get coinApplySavingMode() {
-    return this.clients.length > 0 && this.clients.every(client => client.applySavingMode);
+    if (stoken) this.coinClient = new MCClient(cookie, stoken, ua, savingMode);
   }
 
   async signIn() {
