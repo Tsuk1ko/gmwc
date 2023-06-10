@@ -32,37 +32,6 @@ abstract class Dama {
   }
 }
 
-class KuxiDama extends Dama {
-  private enabled = true;
-
-  public constructor(protected readonly token: string) {
-    super();
-  }
-
-  public get available() {
-    return this.enabled && !!this.token;
-  }
-
-  public async geetest(gt: string, challenge: string, referer: string) {
-    const { data } = await Axios.post<{
-      code: number;
-      msg: string;
-      data: { validate: string };
-    }>(mConsts[24], {
-      token: this.token,
-      gt,
-      challenge,
-      referer,
-    });
-    if (data.code !== 0) {
-      if (data.code === -999 || data.msg.includes('积分不足')) this.enabled = false;
-      throw new Error(`KX打码失败：(${data.code})${data.msg}`);
-    }
-    _log('KX打码成功');
-    return data.data.validate;
-  }
-}
-
 class RenrenDama extends Dama {
   public constructor(protected readonly token: string) {
     super();
@@ -117,7 +86,6 @@ class UnifiedDama extends Dama {
   }
 
   public config(config: Config) {
-    if (config.kuxiToken) this.servers.push(new KuxiDama(config.kuxiToken));
     if (config.rrocrAppkey) this.servers.push(new RenrenDama(config.rrocrAppkey));
   }
 

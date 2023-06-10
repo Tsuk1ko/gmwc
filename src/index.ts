@@ -15,7 +15,6 @@ export type Config = PartialDeep<{
   w: WClientOptions[];
   cids: string[];
   failedWebhook: string;
-  kuxiToken: string;
   rrocrAppkey: string;
   savingMode: boolean;
 }>;
