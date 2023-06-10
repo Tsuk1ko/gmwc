@@ -1,13 +1,14 @@
 import type { MBaseClient } from './base';
 import { MGSClient } from './gs';
 import { MSRClient } from './sr';
-import { MCClient } from './coin';
+import { MCClient, type MCForum } from './coin';
 import { sleep } from '../../utils/sleep';
 
 export type MClientOptions = Partial<{
   cookie: string;
   stoken: string;
   ua: string;
+  forum: MCForum;
   enableGs: boolean;
   enableSr: boolean;
 }>;
@@ -21,6 +22,7 @@ export class MClient {
       cookie,
       stoken,
       ua,
+      forum,
       enableGs = true,
       enableSr = false,
     }: MClientOptions = typeof options === 'string' ? { cookie: options } : options;
@@ -32,7 +34,7 @@ export class MClient {
     }
     if (enableGs) this.clients.push(new MGSClient(cookie, ua, savingMode));
     if (enableSr) this.clients.push(new MSRClient(cookie, ua, savingMode));
-    if (stoken) this.coinClient = new MCClient(cookie, stoken, ua, savingMode);
+    if (stoken) this.coinClient = new MCClient({ cookie, stoken, ua, forum }, savingMode);
   }
 
   async signIn() {

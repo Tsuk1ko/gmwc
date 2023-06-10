@@ -48,6 +48,7 @@
     {
       "cookie": "",
       "stoken": "",
+      "forum": "gs",
       "ua": "",
       "enableGs": true,
       "enableSr": false
@@ -61,23 +62,15 @@
 
 ### `cookie` & `stoken`
 
-1. 打开你的浏览器，进入**无痕/隐身模式**
-2. 打开 `https://www.miyoushe.com/ys/` 并登录
-3. 在上一步登入完成后新建标签页，打开 `https://user.mihoyo.com/` 并登录
-4. <kbd>F12</kbd> 打开开发者工具，点击上方 Network 选项卡，然后刷新页面
-5. 点击下方网络请求列表最上面第一项 `user.mihoyo.com`，在右侧面板往下滚找到 Request Headers 中的 cookie，后面的内容即为 `cookie`
-6. 点击上方 Console 选项卡，粘贴下方代码并回车，输出的内容即为 `stoken`
+[获取方法](https://gist.github.com/Tsuk1ko/58518d7ac96d71a4173fbbf187a00ce1)
 
-   ```js
-   (async cookie => {
-     const ret = await fetch(`https://api-takumi.mihoyo.com/auth/api/getMultiTokenByLoginTicket?login_ticket=${cookie.login_ticket}&token_types=3&uid=${cookie.login_uid}`).then(r => r.json());
-     console.log(ret.data.list.find(({ name }) => name === 'stoken').token);
-   })(Object.fromEntries(document.cookie.split(/;\s*/).map(str => str.split('='))));
-   ```
+### `forum`
+
+选填，`gs` 或 `sr`，用于指定完成币任务所使用的论坛，默认 `gs`
 
 ### `ua`
 
-选填，以前为了应对验证码风控而新增的配置，但目前脚本签到出现验证码几乎是必然情况，此配置可以认为没有作用，请使用 `rrocrAppkey` 解决
+选填，以前为了应对验证码风控而新增的配置，但目前脚本签到出现验证码几乎是必然情况，此配置可以认为没有作用，请使用打码服务解决
 
 UA 获取方法：使用 MYS APP 扫以下二维码获取 UA，填入配置文件中
 
@@ -85,16 +78,16 @@ UA 获取方法：使用 MYS APP 扫以下二维码获取 UA，填入配置文�
 
 ### `enableGs` & `enableSr`
 
-是否启用 gs 或 sr 的签到，默认 gs 为 `true`，sr 为 `false`
+选填，是否启用 gs 或 sr 的签到，默认 gs 为 `true`，sr 为 `false`
 
 ### `failedWebhook`
 
-当运行出错时会自动以 GET 方式请求，可选
+选填，当运行出错时会自动以 GET 方式请求
 
 ### `rrocrAppkey`
 
-人人打码自动过验证码，dddd
+选填，人人打码自动过验证码，dddd
 
 ### `savingMode`
 
-节约模式，如果使用打码服务并设置 `savingMode` 为 `true`，那么当本月原石奖励拿齐后将不再继续签到，币签到如遇验证码也不会签到
+选填，节约模式，如果使用打码服务并设置 `savingMode` 为 `true`，那么当本月原石奖励拿齐后将不再继续签到，币签到如遇验证码也不会签到

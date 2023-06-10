@@ -10,18 +10,40 @@ import { retryAsync } from '../../utils/retry';
 import { sleep } from '../../utils/sleep';
 import { dama } from '../../utils/dama';
 
-export class MCClient {
-  protected axios: AxiosInstance;
-  protected static postIds: string[] = [];
-  protected static failedPostIds: string[] = [];
-  protected static fetchPostIdsFailed = false;
+const forumMap = {
+  gs: {
+    id: 2,
+    forumId: 26,
+  },
+  sr: {
+    id: 6,
+    forumId: 52,
+  },
+} as const;
 
-  constructor(cookie: string, stoken: string, ua?: string, protected readonly savingMode = false) {
+export type MCForum = keyof typeof forumMap;
+
+interface MCClientParams {
+  cookie: string;
+  stoken: string;
+  ua?: string;
+  forum?: MCForum;
+}
+
+export class MCClient {
+  protected static postIdsMap: Map<number, string[]> = new Map();
+  protected static failedPostIdsMap: Map<number, string[]> = new Map();
+
+  protected axios: AxiosInstance;
+  protected forum: MCForum = 'gs';
+
+  constructor({ cookie, stoken, ua, forum }: MCClientParams, protected readonly savingMode = false) {
     const cookieMap = new Cookie(cookie);
     const stuid = cookieMap.get('login_uid') || cookieMap.get('ltuid') || cookieMap.get('account_id');
     if (!stuid) throw new Error('Cookie 不完整，请尝试重新获取');
     cookieMap.set('stuid', stuid);
     cookieMap.set('stoken', stoken);
+    if (forum) this.forum = forum;
     this.axios = Axios.create({
       headers: {
         ...JSON.parse(mConsts[13]),
@@ -38,6 +60,36 @@ export class MCClient {
     return this.savingMode;
   }
 
+  protected get gids() {
+    return forumMap[this.forum].id;
+  }
+
+  protected get forumId() {
+    return forumMap[this.forum].forumId;
+  }
+
+  protected get postIds() {
+    if (!MCClient.postIdsMap.has(this.forumId)) {
+      MCClient.postIdsMap.set(this.forumId, []);
+    }
+    return MCClient.postIdsMap.get(this.forumId)!;
+  }
+
+  protected set postIds(ids: string[]) {
+    MCClient.postIdsMap.set(this.forumId, ids);
+  }
+
+  protected get failedPostIds() {
+    if (!MCClient.failedPostIdsMap.has(this.forumId)) {
+      MCClient.failedPostIdsMap.set(this.forumId, []);
+    }
+    return MCClient.failedPostIdsMap.get(this.forumId)!;
+  }
+
+  protected set failedPostIds(ids: string[]) {
+    MCClient.failedPostIdsMap.set(this.forumId, ids);
+  }
+
   async doTasks() {
     const taskList = await this.getTaskList();
     if (!taskList) return;
@@ -45,10 +97,8 @@ export class MCClient {
       _log('任务已全部完成');
       return;
     }
-    if (!MCClient.postIds.length && !MCClient.fetchPostIdsFailed) {
-      await MCClient.fetchPostIds();
-    }
-    if (!MCClient.postIds.length) {
+    await this.fetchPostIds();
+    if (!this.postIds.length) {
       _warn('无贴可用');
       _setFailed();
     }
@@ -107,7 +157,7 @@ export class MCClient {
 
   protected async signIn(times?: number, challenge?: string) {
     try {
-      const postData = { gids: 2 };
+      const postData = { gids: this.gids };
       const {
         data: { retcode, message, data },
       } = await retryAsync(
@@ -157,7 +207,8 @@ export class MCClient {
     }
   }
 
-  static async fetchPostIds() {
+  async fetchPostIds() {
+    if (this.postIds.length) return;
     try {
       const {
         data: { retcode, message, data },
@@ -169,31 +220,29 @@ export class MCClient {
             data?: { list: Array<{ post: { post_id: string } }> };
           }>(mConsts[16], {
             params: {
-              forum_id: 26,
-              gids: 2,
+              forum_id: this.forumId,
+              gids: this.gids,
               is_good: false,
               is_hot: false,
               page_size: 20,
               sort_type: 1,
             },
           }),
-        e => _warn('获取帖子列表失败，进行重试', e.toString()),
+        e => _warn(`获取帖子列表(${this.forum})失败，进行重试`, e.toString()),
       );
       if (retcode !== 0) {
-        this.fetchPostIdsFailed = true;
-        _err(`获取帖子列表失败(${retcode})：${message}`);
+        _err(`获取帖子列表(${this.forum})失败(${retcode})：${message}`);
         _setFailed();
         return;
       }
       this.postIds = data?.list.map(item => item.post.post_id) || [];
     } catch (e: any) {
-      this.fetchPostIdsFailed = true;
-      _err('获取帖子列表失败', e);
+      _err(`获取帖子列表(${this.forum})失败`, e);
       _setFailed();
     }
   }
 
-  protected async viewPost(times = 3, postIds = MCClient.postIds) {
+  protected async viewPost(times = 3, postIds = this.postIds) {
     times += 1; // 容易漏一个不知道为啥
     let success = 0;
     for (const post_id of postIds) {
@@ -213,7 +262,7 @@ export class MCClient {
         );
         if (retcode !== 0) {
           _warn(`看帖 ${maskedPostId} 失败(${retcode})：${message}`);
-          MCClient.markFailedPostId(post_id);
+          this.markFailedPostId(post_id);
           continue;
         }
         success++;
@@ -226,10 +275,10 @@ export class MCClient {
       _err(`未能完成看帖 ${times} 个任务`);
       _setFailed();
     }
-    MCClient.removeFailedPostIds();
+    this.removeFailedPostIds();
   }
 
-  protected async postUp(times = 5, postIds = MCClient.postIds) {
+  protected async postUp(times = 5, postIds = this.postIds) {
     times += 1; // 容易漏一个不知道为啥
     let success = 0;
     for (const post_id of postIds) {
@@ -249,7 +298,7 @@ export class MCClient {
         );
         if (retcode !== 0) {
           _warn(`点赞 ${maskedPostId} 失败(${retcode})：${message}`);
-          MCClient.markFailedPostId(post_id);
+          this.markFailedPostId(post_id);
           continue;
         }
         success++;
@@ -280,10 +329,10 @@ export class MCClient {
       _err(`未能完成点赞 ${times} 次任务`);
       _setFailed();
     }
-    MCClient.removeFailedPostIds();
+    this.removeFailedPostIds();
   }
 
-  protected async sharePost(times = 1, postIds = MCClient.postIds) {
+  protected async sharePost(times = 1, postIds = this.postIds) {
     let success = 0;
     for (const post_id of postIds) {
       if (success >= times) break;
@@ -304,7 +353,7 @@ export class MCClient {
         );
         if (retcode !== 0) {
           _warn(`分享 ${maskedPostId} 失败(${retcode})：${message}`);
-          MCClient.markFailedPostId(post_id);
+          this.markFailedPostId(post_id);
           continue;
         }
         success++;
@@ -317,7 +366,7 @@ export class MCClient {
       _err(`未能完成分享 ${times} 次任务`);
       _setFailed();
     }
-    MCClient.removeFailedPostIds();
+    this.removeFailedPostIds();
   }
 
   protected getChallenge() {
@@ -343,11 +392,11 @@ export class MCClient {
     );
   }
 
-  protected static markFailedPostId(id: string) {
+  protected markFailedPostId(id: string) {
     this.failedPostIds.push(id);
   }
 
-  protected static removeFailedPostIds() {
+  protected removeFailedPostIds() {
     if (!this.failedPostIds.length) return;
     _.pullAll(this.postIds, this.failedPostIds);
     this.failedPostIds = [];
