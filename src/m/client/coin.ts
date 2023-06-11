@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import Axios, { AxiosInstance } from 'axios';
+import Axios from 'axios';
 import { coinDs, ds } from '../ds';
 import { dvid } from '../dvid';
 import { mConsts } from '../../utils/const';
@@ -9,6 +9,7 @@ import { maskId } from '../../utils/mask';
 import { retryAsync } from '../../utils/retry';
 import { sleep } from '../../utils/sleep';
 import { dama } from '../../utils/dama';
+import type { AxiosInstance } from 'axios';
 
 const forumMap = {
   gs: {
@@ -31,8 +32,8 @@ interface MCClientParams {
 }
 
 export class MCClient {
-  protected static postIdsMap: Map<number, string[]> = new Map();
-  protected static failedPostIdsMap: Map<number, string[]> = new Map();
+  protected static postIdsMap = new Map<number, string[]>();
+  protected static failedPostIdsMap = new Map<number, string[]>();
 
   protected axios: AxiosInstance;
   protected forum: MCForum = 'gs';

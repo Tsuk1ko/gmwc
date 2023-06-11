@@ -1,5 +1,6 @@
 import { mConsts } from '../../utils/const';
-import { MBaseClient, MConfig } from './base';
+import { MBaseClient } from './base';
+import type { MConfig } from './base';
 
 export class MSRClient extends MBaseClient {
   protected config: MConfig = {

@@ -1,4 +1,4 @@
-import Axios, { AxiosInstance } from 'axios';
+import Axios from 'axios';
 import { ds } from '../ds';
 import { dvid } from '../dvid';
 import { _log, _warn, _err, _setFailed } from '../../utils/log';
@@ -6,6 +6,7 @@ import { retryAsync } from '../../utils/retry';
 import { mConsts } from '../../utils/const';
 import { maskId } from '../../utils/mask';
 import { dama } from '../../utils/dama';
+import type { AxiosInstance } from 'axios';
 
 export interface MRole {
   region: string;

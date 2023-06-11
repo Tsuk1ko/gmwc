@@ -7,6 +7,10 @@ const offTsRules = [
   'no-floating-promises',
   'no-misused-promises',
   'naming-convention',
+  'no-confusing-void-expression',
+  'no-explicit-any',
+  'ban-types',
+  'class-literal-property-style',
 ];
 
 module.exports = {
@@ -14,10 +18,36 @@ module.exports = {
     node: true,
   },
   parser: '@typescript-eslint/parser',
-  extends: ['standard-ts', 'prettier'],
+  plugins: ['@typescript-eslint'],
+  extends: [
+    'standard-with-typescript',
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:import/recommended',
+    'plugin:import/typescript',
+    'prettier',
+  ],
   parserOptions: {
     ecmaVersion: 'latest',
+    parser: '@typescript-eslint/parser',
     sourceType: 'module',
+    project: ['tsconfig.json'],
   },
-  rules: Object.fromEntries(offTsRules.map(name => [`@typescript-eslint/${name}`, 'off'])),
+  settings: {
+    'import/resolver': {
+      typescript: true,
+      node: true,
+    },
+  },
+  rules: {
+    ...Object.fromEntries(offTsRules.map(name => [`@typescript-eslint/${name}`, 'off'])),
+    'import/order': ['warn', { groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index', 'type'] }],
+    '@typescript-eslint/consistent-type-imports': [
+      'error',
+      {
+        disallowTypeAnnotations: false,
+        fixStyle: 'separate-type-imports',
+      },
+    ],
+  },
 };

@@ -1,13 +1,14 @@
-import _ from 'lodash';
-import Fs from 'fs-extra';
 import Path from 'path';
-import Axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import _ from 'lodash';
+import { existsSync, readJsonSync, writeJsonSync } from 'fs-extra';
+import Axios from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import { CookieJar } from 'tough-cookie';
 import md5 from 'md5';
 import { _log, _warn, _err, _setFailed } from '../utils/log';
 import { retryAsync } from '../utils/retry';
 import { wConsts } from '../utils/const';
+import type { AxiosInstance, AxiosRequestConfig } from 'axios';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const loadDataStore = require('data-store');
@@ -70,10 +71,10 @@ export class WClient {
   }
 
   protected loadCookieFromCache(): CookieJar {
-    if (!Fs.existsSync(this.cookieCacheFile)) return new CookieJar();
+    if (!existsSync(this.cookieCacheFile)) return new CookieJar();
     _log('读取 cookie 缓存');
     try {
-      return CookieJar.fromJSON(Fs.readJsonSync(this.cookieCacheFile));
+      return CookieJar.fromJSON(readJsonSync(this.cookieCacheFile));
     } catch {
       return new CookieJar();
     }
@@ -81,7 +82,7 @@ export class WClient {
 
   protected saveCookieToCache() {
     _log('保存 cookie 至缓存');
-    Fs.writeJsonSync(this.cookieCacheFile, this.cookieJar.toJSON());
+    writeJsonSync(this.cookieCacheFile, this.cookieJar.toJSON());
   }
 
   get cookieString(): string {

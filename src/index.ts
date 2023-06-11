@@ -1,13 +1,15 @@
 import _ from 'lodash';
-import Fs from 'fs-extra';
+import { existsSync, readFileSync, readJsonSync } from 'fs-extra';
 import Axios from 'axios';
 import { decode } from 'js-base64';
 import { jsonc } from 'jsonc';
 import { _log, _err, _setFailed, _isFailed } from './utils/log';
-import { MClient, MClientOptions } from './m/client';
-import { WClient, WClientOptions } from './w/client';
-import { PartialDeep } from './@types';
+import { MClient } from './m/client';
+import { WClient } from './w/client';
 import { dama } from './utils/dama';
+import type { MClientOptions } from './m/client';
+import type { WClientOptions } from './w/client';
+import type { PartialDeep } from './@types';
 
 export type Config = PartialDeep<{
   users: MClientOptions[];
@@ -30,15 +32,15 @@ const getConfig = async (): Promise<Config> => {
     } catch (e: any) {
       _err('CONFIG_URL 配置错误', e.toString());
     }
-  } else if (Fs.existsSync('config.json')) {
+  } else if (existsSync('config.json')) {
     try {
-      config = Fs.readJsonSync('config.json');
+      config = readJsonSync('config.json');
     } catch (e: any) {
       _err('config.json 格式错误', e.toString());
     }
-  } else if (Fs.existsSync('config.jsonc')) {
+  } else if (existsSync('config.jsonc')) {
     try {
-      config = jsonc.parse(Fs.readFileSync('config.jsonc').toString());
+      config = jsonc.parse(readFileSync('config.jsonc').toString());
     } catch (e: any) {
       _err('config.jsonc 格式错误', e.toString());
     }

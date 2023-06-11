@@ -1,8 +1,8 @@
-import type { MBaseClient } from './base';
+import { sleep } from '../../utils/sleep';
 import { MGSClient } from './gs';
 import { MSRClient } from './sr';
 import { MCClient, type MCForum } from './coin';
-import { sleep } from '../../utils/sleep';
+import type { MBaseClient } from './base';
 
 export type MClientOptions = Partial<{
   cookie: string;

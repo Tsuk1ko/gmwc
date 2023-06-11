@@ -1,8 +1,8 @@
 import Axios from 'axios';
 import { stringify } from 'qs';
-import type { Config } from '..';
 import { mConsts } from './const';
 import { _log, _warn } from './log';
+import type { Config } from '..';
 
 class DamaError extends Error {
   constructor(message?: string | undefined, public readonly applySavingMode = false) {
