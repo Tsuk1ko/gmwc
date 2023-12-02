@@ -1,20 +1,16 @@
 import _ from 'lodash';
 import { existsSync, readFileSync, readJsonSync } from 'fs-extra';
 import Axios from 'axios';
-import { decode } from 'js-base64';
 import { jsonc } from 'jsonc';
-import { _log, _err, _setFailed, _isFailed } from './utils/log';
+import { _log, _err, _isFailed } from './utils/log';
 import { MClient } from './m/client';
-import { WClient } from './w/client';
 import { dama } from './utils/dama';
 import type { MClientOptions } from './m/client';
-import type { WClientOptions } from './w/client';
 import type { PartialDeep } from './@types';
 
 export type Config = PartialDeep<{
   users: MClientOptions[];
   m: MClientOptions[];
-  w: WClientOptions[];
   cids: string[];
   failedWebhook: string;
   rrocrAppkey: string;
@@ -63,26 +59,6 @@ const getConfig = async (): Promise<Config> => {
       const mClient = new MClient(config, savingMode);
       await mClient.signIn();
       await mClient.earnCoin();
-    }
-  }
-
-  // W
-  const wConfig = config.w || [];
-  if (wConfig.length) {
-    _log('\nW');
-    await WClient.fetchGiftListMap([
-      decode('MTAwODA4ZmM0MzlkZWRiYjA2Y2E1ZmQ4NTg4NDhlNTIxYjg3MTY='),
-      ...(config.cids || []),
-    ]);
-    for (const [i, config] of Object.entries(wConfig)) {
-      _log(`\nW[${i}]`);
-      if (!config?.alc || !config.aid || !config.gsid) {
-        _setFailed();
-        _err('缺少 alc / aid / gsid，请查看 README 并更新配置');
-        continue;
-      }
-      const wClient = new WClient(config as WClientOptions);
-      await wClient.signInAndGetGift(i);
     }
   }
 

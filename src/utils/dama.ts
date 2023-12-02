@@ -1,6 +1,6 @@
 import Axios from 'axios';
 import { stringify } from 'qs';
-import { mConsts } from './const';
+import { BBS_CAPTCHA_REFERER, WEB_CAPTCHA_REFERER } from '../m/config';
 import { _log, _warn } from './log';
 import type { Config } from '..';
 
@@ -20,11 +20,11 @@ abstract class Dama {
   }
 
   public gameCaptcha(gt: string, challenge: string, applySavingMode?: boolean) {
-    return this.geetest(gt, challenge, mConsts[22], applySavingMode);
+    return this.geetest(gt, challenge, WEB_CAPTCHA_REFERER, applySavingMode);
   }
 
   public bbsCaptcha(gt: string, challenge: string, applySavingMode?: boolean) {
-    return this.geetest(gt, challenge, mConsts[23], applySavingMode);
+    return this.geetest(gt, challenge, BBS_CAPTCHA_REFERER, applySavingMode);
   }
 
   public async geetest(gt: string, challenge: string, referer: string, applySavingMode?: boolean) {

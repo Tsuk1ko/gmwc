@@ -3,9 +3,9 @@ import { ds } from '../ds';
 import { dvid } from '../dvid';
 import { _log, _warn, _err, _setFailed } from '../../utils/log';
 import { retryAsync } from '../../utils/retry';
-import { mConsts } from '../../utils/const';
 import { maskId } from '../../utils/mask';
 import { dama } from '../../utils/dama';
+import { APP_VERSION, WEB_CLIENT_TYPE, DEFAULT_UA, WEB_ROLES_URL, WEB_API_BASE } from '../config';
 import type { AxiosInstance } from 'axios';
 
 export interface MRole {
@@ -23,30 +23,42 @@ export interface MConfig {
   biz: string;
   actId: string;
   keyAward: string;
-  homeUrl: string;
+  awardsUrl: string;
   isSignUrl: string;
   signUrl: string;
+  headers?: Record<string, string>;
 }
 
 const awardsCache = new Map<string, MAwards[]>();
 
 export abstract class MBaseClient {
   protected abstract readonly config: MConfig;
-  protected readonly axios: AxiosInstance;
   protected totalSignDay = NaN;
 
-  constructor(cookie: string, ua?: string, protected readonly savingMode = false) {
-    this.axios = Axios.create({
+  private _axios?: AxiosInstance;
+
+  constructor(
+    protected readonly cookie: string,
+    protected readonly ua?: string,
+    protected readonly savingMode = false,
+  ) {}
+
+  protected get axios() {
+    if (this._axios) return this._axios;
+    this._axios = Axios.create({
       timeout: 10000,
-      baseURL: mConsts[1],
+      baseURL: WEB_API_BASE,
       headers: {
-        [mConsts[2]]: dvid(),
-        [mConsts[3]]: '5',
-        [mConsts[4]]: '2.34.1',
-        'user-agent': ua || mConsts[5],
-        cookie,
+        ...this.config.headers,
+        'x-rpc-device_id': dvid(),
+        'x-rpc-client_type': WEB_CLIENT_TYPE,
+        'x-rpc-app_version': APP_VERSION,
+        referer: 'https://act.mihoyo.com/',
+        'user-agent': this.ua || DEFAULT_UA,
+        cookie: this.cookie,
       },
     });
+    return this._axios;
   }
 
   protected get awards() {
@@ -79,7 +91,7 @@ export abstract class MBaseClient {
       return await retryAsync(
         () =>
           this.axios
-            .get<{ data?: { list?: MRole[] } }>(mConsts[9], { params: { game_biz: this.config.biz } })
+            .get<{ data?: { list?: MRole[] } }>(WEB_ROLES_URL, { params: { game_biz: this.config.biz } })
             .then(({ data }) => {
               const list = data?.data?.list;
               if (!list) {
@@ -142,8 +154,6 @@ export abstract class MBaseClient {
             {
               headers: {
                 ds: ds(true),
-                origin: mConsts[6],
-                referer: `${mConsts[7]}${act_id}${mConsts[8]}`,
                 ...(captcha
                   ? {
                       'x-rpc-challenge': captcha.challenge,
@@ -203,11 +213,11 @@ export abstract class MBaseClient {
     try {
       return await retryAsync(
         async () => {
-          const { data } = await Axios.get<{
+          const { data } = await this.axios.get<{
             retcode: number;
             message: string;
             data: { awards: MAwards[] };
-          }>(this.config.homeUrl, { params: { act_id: this.config.actId } });
+          }>(this.config.awardsUrl, { params: { act_id: this.config.actId } });
           if (data.retcode !== 0) {
             _err(`获取签到奖励信息失败：(${data.retcode})${data.message}`);
             return;

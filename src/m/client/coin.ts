@@ -1,14 +1,24 @@
 import _ from 'lodash';
 import Axios from 'axios';
-import { coinDs, ds } from '../ds';
+import { ds2, ds } from '../ds';
 import { dvid } from '../dvid';
-import { mConsts } from '../../utils/const';
 import { Cookie } from '../../utils/cookie';
 import { _err, _log, _setFailed, _warn } from '../../utils/log';
 import { maskId } from '../../utils/mask';
 import { retryAsync } from '../../utils/retry';
 import { sleep } from '../../utils/sleep';
 import { dama } from '../../utils/dama';
+import {
+  DEFAULT_UA,
+  BBS_TASK_LIST_URL,
+  BBS_SIGN_URL,
+  BBS_VIEW_POST_URL,
+  BBS_LIKE_POST_URL,
+  BBS_SHARE_POST_URL,
+  BBS_CLIENT_TYPE,
+  APP_VERSION,
+  BBS_POST_LIST_URL_OLD,
+} from '../config';
 import type { AxiosInstance } from 'axios';
 
 const forumMap = {
@@ -47,12 +57,17 @@ export class MCClient {
     if (forum) this.forum = forum;
     this.axios = Axios.create({
       headers: {
-        ...JSON.parse(mConsts[13]),
-        [mConsts[2]]: dvid(),
+        'x-rpc-client_type': BBS_CLIENT_TYPE,
+        'x-rpc-app_version': APP_VERSION,
+        'x-rpc-sys_version': '12',
+        'x-rpc-channel': 'miyousheluodi',
+        'x-rpc-device_name': 'XiaoMi',
+        'x-rpc-device_model': 'Mi 10',
+        'x-rpc-device_id': dvid(),
         ds: ds(),
-        referer: mConsts[14],
+        referer: 'https://app.mihoyo.com',
         cookie: cookieMap.toString(),
-        'user-agent': ua || mConsts[5],
+        'user-agent': ua || DEFAULT_UA,
       },
     });
   }
@@ -121,7 +136,7 @@ export class MCClient {
         },
         60: {
           times: 5,
-          func: this.postUp,
+          func: this.likePost,
         },
         61: {
           times: 1,
@@ -139,7 +154,7 @@ export class MCClient {
             happened_times: number;
           }>;
         };
-      }>(mConsts[21]);
+      }>(BBS_TASK_LIST_URL);
       if (retcode !== 0) {
         _err(`获取任务列表失败(${retcode})：${message}`);
         _setFailed();
@@ -167,9 +182,9 @@ export class MCClient {
             retcode: number;
             message: string;
             data?: { points: number };
-          }>(mConsts[15], postData, {
+          }>(BBS_SIGN_URL, postData, {
             headers: {
-              ds: coinDs(postData),
+              ds: ds2(postData),
               ...(challenge ? { 'x-rpc-challenge': challenge } : {}),
             },
           }),
@@ -219,7 +234,7 @@ export class MCClient {
             retcode: number;
             message: string;
             data?: { list: Array<{ post: { post_id: string } }> };
-          }>(mConsts[16], {
+          }>(BBS_POST_LIST_URL_OLD, {
             params: {
               forum_id: this.forumId,
               gids: this.gids,
@@ -258,7 +273,7 @@ export class MCClient {
             this.axios.get<{
               retcode: number;
               message: string;
-            }>(mConsts[17], { params: { post_id } }),
+            }>(BBS_VIEW_POST_URL, { params: { post_id } }),
           e => _warn(`看帖 ${maskedPostId} 失败，进行重试`, e.toString()),
         );
         if (retcode !== 0) {
@@ -279,7 +294,7 @@ export class MCClient {
     this.removeFailedPostIds();
   }
 
-  protected async postUp(times = 5, postIds = this.postIds) {
+  protected async likePost(times = 5, postIds = this.postIds) {
     times += 1; // 容易漏一个不知道为啥
     let success = 0;
     for (const post_id of postIds) {
@@ -294,7 +309,7 @@ export class MCClient {
             this.axios.post<{
               retcode: number;
               message: string;
-            }>(mConsts[18], { post_id, is_cancel: false }),
+            }>(BBS_LIKE_POST_URL, { post_id, is_cancel: false }),
           e => _warn(`点赞 ${maskedPostId} 失败，进行重试`, e.toString()),
         );
         if (retcode !== 0) {
@@ -313,7 +328,7 @@ export class MCClient {
               this.axios.post<{
                 retcode: number;
                 message: string;
-              }>(mConsts[18], { post_id, is_cancel: true }),
+              }>(BBS_LIKE_POST_URL, { post_id, is_cancel: true }),
             e => _warn(`取消点赞 ${maskedPostId} 失败，进行重试`, e.toString()),
           );
           if (retcode !== 0) {
@@ -347,7 +362,7 @@ export class MCClient {
             this.axios.get<{
               retcode: number;
               message: string;
-            }>(mConsts[19], {
+            }>(BBS_SHARE_POST_URL, {
               params: { entity_id: post_id, entity_type: 1 },
             }),
           e => _warn(`分享 ${maskedPostId} 失败，进行重试`, e.toString()),
