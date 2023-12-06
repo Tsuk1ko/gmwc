@@ -54,6 +54,7 @@ export abstract class MBaseClient {
         'x-rpc-client_type': WEB_CLIENT_TYPE,
         'x-rpc-app_version': APP_VERSION,
         referer: 'https://act.mihoyo.com/',
+        origin: 'https://act.mihoyo.com',
         'user-agent': this.ua || DEFAULT_UA,
         cookie: this.cookie,
       },
