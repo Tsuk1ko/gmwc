@@ -1,6 +1,6 @@
-import md5 from 'md5';
 import { generate } from 'randomstring';
 import { stringify } from '../utils/qs';
+import { md5 } from '../utils/md5';
 import { BBS_SALT, BBS_SALT_2, WEB_SALT } from './config';
 
 const randStr = () => generate({ length: 6, charset: 'abcdefghijklmnopqrstuvwxyz0123456789' });

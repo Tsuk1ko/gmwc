@@ -1,4 +1,4 @@
-import { keyBy, map, pullAll } from 'lodash';
+import { keyBy, map, pullAll } from 'lodash-es';
 import Axios from 'axios';
 import { ds2, ds } from '../ds';
 import { dvid } from '../dvid';

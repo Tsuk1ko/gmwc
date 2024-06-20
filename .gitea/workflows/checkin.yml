@@ -1,0 +1,36 @@
+name: Check-in
+
+on:
+  push:
+  schedule:
+    - cron: '0 7 * * *'
+
+jobs:
+  check-in:
+    runs-on: bun-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: MD5 lockfile
+        id: md5
+        uses: Tsuk1ko/actions-md5@main
+        with:
+          path: bun.lockb
+
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: '~/.bun/install/cache'
+          key: v1-${{ steps.md5.outputs.digest }}
+          restore-keys: |
+            v1-
+
+      - name: Install dependencies
+        run: bun install --production
+
+      - name: Check-in
+        env:
+          CONFIG_URL: ${{ vars.CONFIG_URL }}
+        run: bun start

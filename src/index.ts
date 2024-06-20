@@ -1,5 +1,4 @@
 import { existsSync, readFileSync } from 'fs';
-import Axios from 'axios';
 import { jsonc } from 'jsonc';
 import { _log, _err, _isFailed } from './utils/log';
 import { MClient } from './m/client';
@@ -22,8 +21,8 @@ const getConfig = async (): Promise<Config> => {
   let config = {};
   if (process.env.CONFIG_URL) {
     try {
-      const { data } = await Axios.get(process.env.CONFIG_URL);
-      config = typeof data === 'string' ? jsonc.parse(data) : data;
+      const data = await fetch(process.env.CONFIG_URL).then(r => r.text());
+      config = jsonc.parse(data);
     } catch (e: any) {
       _err('CONFIG_URL 配置错误', e.toString());
     }
@@ -66,7 +65,7 @@ const getConfig = async (): Promise<Config> => {
   // webhook
   if (_isFailed() && config.failedWebhook) {
     try {
-      await Axios.get(config.failedWebhook);
+      await fetch(config.failedWebhook);
     } catch (error) {
       _err('Webhook 调用失败');
       _err(error);
