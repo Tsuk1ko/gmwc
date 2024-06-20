@@ -1,11 +1,14 @@
 import Axios from 'axios';
-import { stringify } from 'qs';
 import { BBS_CAPTCHA_REFERER, WEB_CAPTCHA_REFERER } from '../m/config';
 import { _log, _warn } from './log';
+import { stringify } from './qs';
 import type { Config } from '..';
 
 class DamaError extends Error {
-  constructor(message?: string | undefined, public readonly applySavingMode = false) {
+  constructor(
+    message?: string | undefined,
+    public readonly applySavingMode = false,
+  ) {
     super(message);
   }
 }

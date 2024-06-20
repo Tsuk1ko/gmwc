@@ -1,5 +1,4 @@
-import _ from 'lodash';
-import { existsSync, readFileSync, readJsonSync } from 'fs-extra';
+import { existsSync, readFileSync } from 'fs';
 import Axios from 'axios';
 import { jsonc } from 'jsonc';
 import { _log, _err, _isFailed } from './utils/log';
@@ -17,7 +16,7 @@ export type Config = PartialDeep<{
   savingMode: boolean;
 }>;
 
-_.templateSettings.interpolate = /{{([\s\S]+?)}}/g;
+const readJsonSync = (path: string): any => JSON.parse(readFileSync(path).toString());
 
 const getConfig = async (): Promise<Config> => {
   let config = {};

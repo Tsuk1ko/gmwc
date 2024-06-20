@@ -11,6 +11,7 @@ const offTsRules = [
   'no-explicit-any',
   'ban-types',
   'class-literal-property-style',
+  'unbound-method',
 ];
 
 module.exports = {
@@ -20,7 +21,7 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint'],
   extends: [
-    'standard-with-typescript',
+    'love',
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:import/recommended',

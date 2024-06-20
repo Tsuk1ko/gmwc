@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { keyBy, map, pullAll } from 'lodash';
 import Axios from 'axios';
 import { ds2, ds } from '../ds';
 import { dvid } from '../dvid';
@@ -48,7 +48,10 @@ export class MCClient {
   protected axios: AxiosInstance;
   protected forum: MCForum = 'gs';
 
-  constructor({ cookie, stoken, ua, forum }: MCClientParams, protected readonly savingMode = false) {
+  constructor(
+    { cookie, stoken, ua, forum }: MCClientParams,
+    protected readonly savingMode = false,
+  ) {
     const cookieMap = new Cookie(cookie);
     const stuid = cookieMap.get('login_uid') || cookieMap.get('ltuid') || cookieMap.get('account_id');
     if (!stuid) throw new Error('Cookie 不完整，请尝试重新获取');
@@ -160,8 +163,8 @@ export class MCClient {
         _setFailed();
         return;
       }
-      const taskStateMap = _.keyBy(data.states, 'mission_id');
-      return _.map(taskMap, ({ times, func }, id) => ({
+      const taskStateMap = keyBy(data.states, 'mission_id');
+      return map(taskMap, ({ times, func }, id) => ({
         times: times - (taskStateMap[id]?.happened_times ?? 0),
         func,
       })).filter(({ times }) => times > 0);
@@ -414,7 +417,7 @@ export class MCClient {
 
   protected removeFailedPostIds() {
     if (!this.failedPostIds.length) return;
-    _.pullAll(this.postIds, this.failedPostIds);
+    pullAll(this.postIds, this.failedPostIds);
     this.failedPostIds = [];
   }
 }
