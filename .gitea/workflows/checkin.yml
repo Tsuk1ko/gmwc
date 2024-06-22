@@ -1,0 +1,18 @@
+name: Check-in
+
+on:
+  schedule:
+    - cron: '0 7 * * *'
+
+jobs:
+  check-in:
+    runs-on: bun-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check-in
+        env:
+          CONFIG_URL: ${{ vars.CONFIG_URL }}
+        run: bun run index.js
