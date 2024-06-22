@@ -8,6 +8,7 @@
   "private": true,
   "scripts": {
     "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix"
   },
